@@ -6,7 +6,8 @@
 
 
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
-    <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/angular_material/1.1.0-rc2/angular-material.min.css">
+    <link rel="stylesheet"
+          href="http://ajax.googleapis.com/ajax/libs/angular_material/1.1.0-rc2/angular-material.min.css">
     <link rel="stylesheet"
           href="https://fonts.googleapis.com/css?family=Roboto:regular,bold,italic,thin,light,bolditalic,black,medium&amp;lang=en">
     <script defer src="https://code.getmdl.io/1.1.3/material.min.js"></script>
@@ -22,14 +23,41 @@
 
 </head>
 <body ng-controller="zhsCtrl">
-<form name="userForm">
-    <div layout-gt-sm="row">
-        <md-input-container class="md-block" flex-gt-sm>
+<div layout="column">
+    <div layout="row" layout-align="start start">
+        <span flex="5"></span>
+    <span flex="30">
+    <form name="userForm">
+        <md-input-container class="md-block">
             <label>Github Key</label>
-            <input ng-model="user.key">
+            <input minlength="30" ng-model="user.key">
         </md-input-container>
-        <md-button class="md-raised">Submit</md-button>
-        </div>
     </form>
+        </span>
+        <md-button class="md-raised">Submit</md-button>
+    </div>
+    <div layout="row">
+    <span flex="5">
+    </span>
+        <div flex="30">
+            <ul>
+                <li ng-repeat="board in board.pipelines">
+                    ({{board.issues.length}}) {{board.name}}
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div>
+        <md-content>
+            {{issue}}
+        </md-content>
+    </div>
+    WHAT????
+    <div>
+        <md-content>
+            {{issueevents}}
+        </md-content>
+    </div>
+</div>
 </body>
 </html>
