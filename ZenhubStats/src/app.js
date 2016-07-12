@@ -14,14 +14,27 @@ var zhsApp = angular.module('zhsApp', ['ngMaterial'])
 
 zhsApp.controller('zhsCtrl', function($scope, $http){
 
-      google.charts.load('current', {'packages':['corechart']});
-
+      google.charts.load('current', {'packages':['corechart','scatter']});
 
 var req = {
   method: 'GET',
      url: 'http://cors.io/?u=https://api.zenhub.io/p1/repositories/60145876/board?access_token=ba8dd91a4ab09a70684bea407238a515bd759f23d1180078289c68cb98da96dab988b15e7b59e7ad',
   //url: 'http://elections.huffingtonpost.com/pollster/api/polls.json?topic=2016-president&page=30',
   };
+
+//function fetch(){
+//var req = {
+//  method: 'GET',
+//     url: 'http://cors.io/?u=https://api.zenhub.io/p1/repositories/60145876/board?access_token=ba8dd91a4ab09a70684bea407238a515bd759f23d1180078289c68cb98da96dab988b15e7b59e7ad',
+//  //url: 'http://elections.huffingtonpost.com/pollster/api/polls.json?topic=2016-president&page=30',
+//  };
+//
+//$http(req,{cache: true}).then(function(data){
+//
+//$scope.bb = data;
+//});
+//console.log("first we have data = "+JSON.stringify($scope.bb));
+//};
 
 $http(req,{cache: true}).success(function(data){
 console.log('success: '+data);
@@ -97,7 +110,6 @@ $scope.board = data;
                chart.draw(data, options);
              }
       });
-
 //var reqissue = {
 //  method: 'GET',
 //     url: 'http://cors.io/?u=https://api.zenhub.io/p1/repositories/60145876/issues/333?access_token=ba8dd91a4ab09a70684bea407238a515bd759f23d1180078289c68cb98da96dab988b15e7b59e7ad',
@@ -110,6 +122,63 @@ $scope.board = data;
 //$scope.issue = data;
 //
 //});
+
+$scope.scatterdraw = function() {
+var i;
+$http(req,{cache: true}).success(function(data){
+console.log("did I get the data "+data);
+console.log("check it out "+data.pipelines[10].name);
+//data=fetch();
+//var someText = JSON.stringify(data);
+//console.log(data+" is on the inside");
+//console.log(someText+" some pipelines");
+for(i=0;i<data.pipelines[10].issues.length;i++){
+//console.log(data.pipelines[7].issues[i].issue_number);
+}});
+//https://tylermcginnis.com/angularjs-factory-vs-service-vs-provider-5f426cfe6b8c#.lmx54idqm
+google.charts.setOnLoadCallback(scatterplot);
+function scatterplot () {
+        var data = new google.visualization.DataTable();
+        data.addColumn('number', 'Hours Studied');
+        data.addColumn('number', 'Final');
+
+        data.addRows([
+          [0, 67], [1, 88], [2, 77],
+          [3, 93], [4, 85], [5, 91],
+          [6, 71], [7, 78], [8, 93],
+          [9, 80], [10, 82],[0, 75],
+          [5, 80], [3, 90], [1, 72],
+          [5, 75], [6, 68], [7, 98],
+          [3, 82], [9, 94], [2, 79],
+          [2, 95], [2, 86], [3, 67],
+          [4, 60], [2, 80], [6, 92],
+          [2, 81], [8, 79], [9, 83],
+          [3, 75], [1, 80], [3, 71],
+          [3, 89], [4, 92], [5, 85],
+          [6, 92], [7, 78], [6, 95],
+          [3, 81], [0, 64], [4, 85],
+          [2, 83], [3, 96], [4, 77],
+          [5, 89], [4, 89], [7, 84],
+          [4, 92], [9, 98]
+        ]);
+
+        var options = {
+          width: 800,
+          height: 500,
+          chart: {
+            title: 'Process Control Diagram',
+            subtitle: 'Testing'
+          },
+          hAxis: {title: 'Date'},
+          vAxis: {title: 'Days'}
+        };
+
+        var chart = new google.charts.Scatter(document.getElementById('scatterchart_material'));
+
+        chart.draw(data, google.charts.Scatter.convertOptions(options));
+};
+};
+
 
 $scope.checkform = function(thing) {
 console.log($scope.issue_number);
