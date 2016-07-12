@@ -23,54 +23,59 @@
 
 </head>
 <body ng-controller="zhsCtrl">
+<md-toolbar class="md-hue-2">
+    <h4>
+        <span flex-offset="5">Zenhub Stats</span>
+    </h4>
+</md-toolbar>
+
 <div layout="column">
+
+
     <div layout="row" layout-align="start start">
-        <span flex="5"></span>
-    <span flex="30">
-    <form name="userForm">
-        <md-input-container class="md-block">
+        <!--<span flex="5"></span>-->
+        <span flex-offset="5"></span>
+        <md-input-container flex="20" class="md-block">
             <label>Github Key</label>
             <input minlength="30" ng-model="user.key">
         </md-input-container>
-        <md-input-container class="md-block">
+
+        <md-button class="md-raised" ng-click="checkform(issue_number)">Submit</md-button>
+    </div>
+
+    <div layout="row" flex-offset="5" layout-align="start center">
+        Product Development
+        <md-switch style="margin:10px" ng-model="repo" ng-true-value="'Product Development'" ng-false-value="'Analytics'" class="md-warn">
+         Analytics
+            </md-switch>
+    </div>
+
+    <div flex-offset="5">
+        <md-input-container>
             <label>Issue Number</label>
             <input maxlength="4" ng-model="issue_number">
         </md-input-container>
-        <md-input-container class="md-block">
-            <label>Repo</label>
-            <input ng-model="repo_number">
-        </md-input-container>
-        <md-input-container>
-            <label>Repo</label>
-                 <md-select ng-model="select_repo">
-                <md-option value="Prod Dev">
-                      Product Development
-                </md-option>
-                <md-option value="Analytics">
-                    Analytics
-                </md-option>
-        </md-input-container>
-        <md-switch ng-model="data.cb2" aria-label="Switch 2" ng-true-value="'yup'" ng-false-value="'nope'" class="md-warn">
-    Switch 2 (md-warn): {{ data.cb2 }}
-  </md-switch>
-    </form>
-        </span>
-        <md-button class="md-raised">Submit</md-button>
     </div>
+</div>
+
+
+
     <div layout="row">
-    <span flex="5">
-    </span>
-        <div flex="30">
+        <div flex-offset="5">
             <ul>
                 <li ng-repeat="board in board.pipelines">
                     ({{board.issues.length}}) {{board.name}}
                 </li>
             </ul>
         </div>
+        <div flex-offset="5">
+            <pre style="overflow:hidden" id="design_pie"></pre>
+        </div>
+        <div flex-offset="5">
+            <pre style="overflow:hidden" id="engineering_pie"></pre>
+        </div>
     </div>
-    <div>
-        <pre style="overflow:hidden" id="pie"></pre>
-    </div>
+
     <div>
         <md-content>
             {{issue}}
