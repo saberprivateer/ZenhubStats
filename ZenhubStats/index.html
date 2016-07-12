@@ -32,6 +32,27 @@
             <label>Github Key</label>
             <input minlength="30" ng-model="user.key">
         </md-input-container>
+        <md-input-container class="md-block">
+            <label>Issue Number</label>
+            <input maxlength="4" ng-model="issue_number">
+        </md-input-container>
+        <md-input-container class="md-block">
+            <label>Repo</label>
+            <input ng-model="repo_number">
+        </md-input-container>
+        <md-input-container>
+            <label>Repo</label>
+                 <md-select ng-model="select_repo">
+                <md-option value="Prod Dev">
+                      Product Development
+                </md-option>
+                <md-option value="Analytics">
+                    Analytics
+                </md-option>
+        </md-input-container>
+        <md-switch ng-model="data.cb2" aria-label="Switch 2" ng-true-value="'yup'" ng-false-value="'nope'" class="md-warn">
+    Switch 2 (md-warn): {{ data.cb2 }}
+  </md-switch>
     </form>
         </span>
         <md-button class="md-raised">Submit</md-button>

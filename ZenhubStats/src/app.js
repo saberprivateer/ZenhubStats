@@ -72,6 +72,8 @@ $scope.issue = data;
 
 });
 
+$scope.reqissue
+
 var reqissueevents = {
   method: 'GET',
      url: 'http://cors.io/?u=https://api.zenhub.io/p1/repositories/60145876/issues/333/events?access_token=ba8dd91a4ab09a70684bea407238a515bd759f23d1180078289c68cb98da96dab988b15e7b59e7ad',
