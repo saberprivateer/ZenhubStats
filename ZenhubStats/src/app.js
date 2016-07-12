@@ -15,7 +15,7 @@ zhsApp.controller('zhsCtrl', function($scope, $http){
 
 var req = {
   method: 'GET',
-     url: 'http://cors.io/?u=https://api.zenhub.io/p1/repositories/13550592/board?access_token=ba8dd91a4ab09a70684bea407238a515bd759f23d1180078289c68cb98da96dab988b15e7b59e7ad',
+     url: 'http://cors.io/?u=https://api.zenhub.io/p1/repositories/60145876/board?access_token=ba8dd91a4ab09a70684bea407238a515bd759f23d1180078289c68cb98da96dab988b15e7b59e7ad',
   //url: 'http://elections.huffingtonpost.com/pollster/api/polls.json?topic=2016-president&page=30',
   };
 
@@ -32,7 +32,7 @@ $scope.board = data;
               data.addColumn('string','Pipeline');
               data.addColumn('number','Qty');
               data.addRows($scope.board.pipelines.length);
-              for (i=0;i<$scope.board.pipelines.length;i++){
+              for (i=4;i<$scope.board.pipelines.length;i++){
                             data.setCell(i,0,$scope.board.pipelines[i].name);
                             data.setCell(i,1,$scope.board.pipelines[i].issues.length);
                             }
@@ -61,7 +61,7 @@ $scope.board = data;
 
 var reqissue = {
   method: 'GET',
-     url: 'http://cors.io/?u=https://api.zenhub.io/p1/repositories/13550592/issues/433?access_token=ba8dd91a4ab09a70684bea407238a515bd759f23d1180078289c68cb98da96dab988b15e7b59e7ad',
+     url: 'http://cors.io/?u=https://api.zenhub.io/p1/repositories/60145876/issues/333?access_token=ba8dd91a4ab09a70684bea407238a515bd759f23d1180078289c68cb98da96dab988b15e7b59e7ad',
   //url: 'http://elections.huffingtonpost.com/pollster/api/polls.json?topic=2016-president&page=30',
   };
 
@@ -74,7 +74,7 @@ $scope.issue = data;
 
 var reqissueevents = {
   method: 'GET',
-     url: 'http://cors.io/?u=https://api.zenhub.io/p1/repositories/13550592/issues/433/events?access_token=ba8dd91a4ab09a70684bea407238a515bd759f23d1180078289c68cb98da96dab988b15e7b59e7ad',
+     url: 'http://cors.io/?u=https://api.zenhub.io/p1/repositories/60145876/issues/333/events?access_token=ba8dd91a4ab09a70684bea407238a515bd759f23d1180078289c68cb98da96dab988b15e7b59e7ad',
   //url: 'http://elections.huffingtonpost.com/pollster/api/polls.json?topic=2016-president&page=30',
   };
 
