@@ -12,7 +12,7 @@ var zhsApp = angular.module('zhsApp', ['ngMaterial'])
         delete $httpProvider.defaults.headers.common['X-Requested-With'];
 });
 
-zhsApp.controller('zhsCtrl', function($scope, $http, issueService){
+zhsApp.controller('zhsCtrl', function($scope, $http, issueService, dataService){
 
       google.charts.load('current', {'packages':['corechart','scatter']});
 
@@ -109,29 +109,69 @@ $scope.board = data;
 //
 //});
 
-var fetch = function(issue) {
-    $http.get('http://cors.io/?u=https://api.zenhub.io/p1/repositories/60145876/issues/'+issue+'?access_token='+at)
+var fetch = function() {
+var at = 'ba8dd91a4ab09a70684bea407238a515bd759f23d1180078289c68cb98da96dab988b15e7b59e7ad';
+    $http.get('http://cors.io/?u=https://api.zenhub.io/p1/repositories/60145876/board/?access_token='+at)
         .then(function(data)
         {
             console.log('Success of fetch');
             return data;
-//            console.log(data);
         });
+//            console.log('fetch after http '+data);
+
 };
+//
+//$scope.bi = null;
+//    dataService.getData().then(function(dataResponse) {
+//        $scope.bi = dataResponse;
+//    });
+//console.log(JSON.stringify($scope.bi)+" outside");
 
 $scope.scatterdraw = function() {
-var issue_info;
-var i;
-for(i=500;i<510;i++){
-issueService.issueInfo(i).then(function (data) {
-                    issue_info = data;
-//                    console.log(JSON.stringify(data) + "pipeline");
-                      console.log(issue_info.pipeline.name + "pipeline");
-                });
-};
+//var issue_info={};
+//var i;
+//issue_info=fetch();
+//console.log(issue_info + "just so");
+////for(i=500;i<510;i++){
+////issue_info = issueService.zhissuedata(522).then(function (data) {
+////                    return data;
+////                    console.log(JSON.stringify(data) + "pipeline");
+////                      console.log(issue_info.pipeline.name + "pipeline");
+////                });
+////};
+//console.log(JSON.stringify(issue_info) + "pipeline");
+//var board_info;
+
 //https://tylermcginnis.com/angularjs-factory-vs-service-vs-provider-5f426cfe6b8c#.lmx54idqm
+issueService.zhboard().then(function (data) {
+$scope.bi = data.pipelines[9].issues;
+//console.log(JSON.stringify($scope.bi));
+google.charts.setOnLoadCallback(codestale);
+function codestale () {
+var gdata = new google.visualization.DataTable();
+gdata.addColumn('number','Issue');
+gdata.addColumn('number','Days');
+for(var i=0;i<$scope.bi.length;i++){
+issueService.zhissueevents(501).then(function (data){
+gdata.addRows([[0, 55]]);
+//console.log(JSON.stringify(data));
+});
+};
+console.log(JSON.stringify(gdata));
+var options = {
+          title: 'Time in Code Review',
+          legend: { position: 'none' },
+        };
+
+        var chart = new google.visualization.Histogram(document.getElementById('codestalehist'));
+        chart.draw(gdata, options);
+
+}});
+
 google.charts.setOnLoadCallback(scatterplot);
 function scatterplot () {
+
+
         var data = new google.visualization.DataTable();
         data.addColumn('number', 'Hours Studied');
         data.addColumn('number', 'Final');
@@ -194,7 +234,7 @@ console.log($scope.issue_number);
 
 zhsApp.service('issueService', function ($http) {
 
-    this.issueInfo = function(issue_number){
+    this.zhissuedata = function(issue_number){
 
         var dataUrl = "http://cors.io/?u=https://api.zenhub.io/p1/repositories/60145876/issues/";
         var at = 'ba8dd91a4ab09a70684bea407238a515bd759f23d1180078289c68cb98da96dab988b15e7b59e7ad';
@@ -212,12 +252,77 @@ zhsApp.service('issueService', function ($http) {
 
             return data.data;
 
-        }, function (error) {console.log('totally errored');
+        }, function (error) {console.log('zhissuedata totally errored');
 
             // called asynchronously if an error occurs
             // or server returns response with an error status.
         });
 
     }
+    this.zhissueevents = function(issue_number){
 
+            var dataUrl = "http://cors.io/?u=https://api.zenhub.io/p1/repositories/60145876/issues/";
+            var at = 'ba8dd91a4ab09a70684bea407238a515bd759f23d1180078289c68cb98da96dab988b15e7b59e7ad';
+
+            // Simple GET request example :
+            return $http({
+                method: 'GET',
+                dataType: "json",
+                url: dataUrl+issue_number+"/events?access_token="+at
+            })
+            .then( function(data, status, headers, config) {
+
+                // this callback will be called asynchronously
+                // when the response is available
+
+                return data.data;
+
+            }, function (error) {console.log('zhissueevents totally errored');
+
+                // called asynchronously if an error occurs
+                // or server returns response with an error status.
+            });
+
+        }
+    this.zhboard = function(){
+
+            var dataUrl = "http://cors.io/?u=https://api.zenhub.io/p1/repositories/60145876/board";
+            var at = 'ba8dd91a4ab09a70684bea407238a515bd759f23d1180078289c68cb98da96dab988b15e7b59e7ad';
+
+            // Simple GET request example :
+            return $http({
+                method: 'GET',
+                dataType: "json",
+                url: dataUrl+"?access_token="+at
+            })
+            .then( function(data, status, headers, config) {
+
+                // this callback will be called asynchronously
+                // when the response is available
+
+                return data.data;
+
+            }, function (error) {console.log('zhboard totally errored');
+
+                // called asynchronously if an error occurs
+                // or server returns response with an error status.
+            });
+        }
+});
+
+zhsApp.service('dataService', function($http) {
+//    delete $http.defaults.headers.common['X-Requested-With'];
+  var dataUrl = "http://cors.io/?u=https://api.zenhub.io/p1/repositories/60145876/board";
+              var at = 'ba8dd91a4ab09a70684bea407238a515bd759f23d1180078289c68cb98da96dab988b15e7b59e7ad';
+
+
+    this.getData = function() {
+        // $http() returns a $promise that we can add handlers with .then()
+        return $http({
+            method: 'GET',
+            url: dataUrl+"?access_token="+at
+//            params: 'limit=10, sort_by=created:desc',
+//            headers: {'Authorization': 'Token token=xxxxYYYYZzzz'}
+         });
+     }
 });

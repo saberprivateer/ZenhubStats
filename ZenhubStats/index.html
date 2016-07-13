@@ -37,7 +37,7 @@
         <span flex-offset="5"></span>
         <md-input-container flex="20" class="md-block">
             <label>Github Key</label>
-            <input minlength="30" ng-model="user.key">
+            <input minlength="30" ng-model="user.key" value="">
         </md-input-container>
 
         <md-button class="md-raised" ng-click="checkform(issue_number)">Submit</md-button>
@@ -75,6 +75,12 @@
             <pre style="overflow:hidden" id="engineering_pie"></pre>
         </div>
     </div>
+
+
+<div flex-offset="5" data-ng-init="scatterdraw()">
+    <pre style="overflow:hidden" id="codestalehist"></pre>
+
+</div>
 
     <div flex-offset="5" data-ng-init="scatterdraw()">
         <pre style="overflow:hidden" id="scatterchart_material"></pre>
