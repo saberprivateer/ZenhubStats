@@ -12,7 +12,7 @@ var zhsApp = angular.module('zhsApp', ['ngMaterial'])
         delete $httpProvider.defaults.headers.common['X-Requested-With'];
 });
 
-zhsApp.controller('zhsCtrl', function($scope, $http){
+zhsApp.controller('zhsCtrl', function($scope, $http, issueService){
 
       google.charts.load('current', {'packages':['corechart','scatter']});
 
@@ -21,20 +21,6 @@ var req = {
      url: 'http://cors.io/?u=https://api.zenhub.io/p1/repositories/60145876/board?access_token=ba8dd91a4ab09a70684bea407238a515bd759f23d1180078289c68cb98da96dab988b15e7b59e7ad',
   //url: 'http://elections.huffingtonpost.com/pollster/api/polls.json?topic=2016-president&page=30',
   };
-
-//function fetch(){
-//var req = {
-//  method: 'GET',
-//     url: 'http://cors.io/?u=https://api.zenhub.io/p1/repositories/60145876/board?access_token=ba8dd91a4ab09a70684bea407238a515bd759f23d1180078289c68cb98da96dab988b15e7b59e7ad',
-//  //url: 'http://elections.huffingtonpost.com/pollster/api/polls.json?topic=2016-president&page=30',
-//  };
-//
-//$http(req,{cache: true}).then(function(data){
-//
-//$scope.bb = data;
-//});
-//console.log("first we have data = "+JSON.stringify($scope.bb));
-//};
 
 $http(req,{cache: true}).success(function(data){
 console.log('success: '+data);
@@ -123,25 +109,32 @@ $scope.board = data;
 //
 //});
 
+var fetch = function(issue) {
+    $http.get('http://cors.io/?u=https://api.zenhub.io/p1/repositories/60145876/issues/'+issue+'?access_token='+at)
+        .then(function(data)
+        {
+            console.log('Success of fetch');
+            return data;
+//            console.log(data);
+        });
+};
+
 $scope.scatterdraw = function() {
+var issue_info;
 var i;
-$http(req,{cache: true}).success(function(data){
-console.log("did I get the data "+data);
-console.log("check it out "+data.pipelines[10].name);
-//data=fetch();
-//var someText = JSON.stringify(data);
-//console.log(data+" is on the inside");
-//console.log(someText+" some pipelines");
-for(i=0;i<data.pipelines[10].issues.length;i++){
-//console.log(data.pipelines[7].issues[i].issue_number);
-}});
+for(i=500;i<510;i++){
+issueService.issueInfo(i).then(function (data) {
+                    issue_info = data;
+//                    console.log(JSON.stringify(data) + "pipeline");
+                      console.log(issue_info.pipeline.name + "pipeline");
+                });
+};
 //https://tylermcginnis.com/angularjs-factory-vs-service-vs-provider-5f426cfe6b8c#.lmx54idqm
 google.charts.setOnLoadCallback(scatterplot);
 function scatterplot () {
         var data = new google.visualization.DataTable();
         data.addColumn('number', 'Hours Studied');
         data.addColumn('number', 'Final');
-
         data.addRows([
           [0, 67], [1, 88], [2, 77],
           [3, 93], [4, 85], [5, 91],
@@ -196,5 +189,35 @@ console.log($scope.issue_number);
 //$scope.issueevents = data;
 //
 //});
+
+});
+
+zhsApp.service('issueService', function ($http) {
+
+    this.issueInfo = function(issue_number){
+
+        var dataUrl = "http://cors.io/?u=https://api.zenhub.io/p1/repositories/60145876/issues/";
+        var at = 'ba8dd91a4ab09a70684bea407238a515bd759f23d1180078289c68cb98da96dab988b15e7b59e7ad';
+
+        // Simple GET request example :
+        return $http({
+            method: 'GET',
+            dataType: "json",
+            url: dataUrl+issue_number+"?access_token="+at
+        })
+        .then( function(data, status, headers, config) {
+
+            // this callback will be called asynchronously
+            // when the response is available
+
+            return data.data;
+
+        }, function (error) {console.log('totally errored');
+
+            // called asynchronously if an error occurs
+            // or server returns response with an error status.
+        });
+
+    }
 
 });
