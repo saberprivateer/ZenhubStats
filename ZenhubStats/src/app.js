@@ -14,7 +14,7 @@ var zhsApp = angular.module('zhsApp', ['ngMaterial'])
 
 zhsApp.controller('zhsCtrl', function($scope, $http, issueService, dataService){
 
-      google.charts.load('current', {'packages':['corechart','scatter']});
+      google.charts.load('current', {'packages':['corechart','scatter','timeline']});
 
 var req = {
   method: 'GET',
@@ -25,6 +25,7 @@ var req = {
 //The Pie Charts
 $http(req,{cache: true}).success(function(data){
 $scope.board = data;
+/*
 
    google.charts.setOnLoadCallback(designPie);
    google.charts.setOnLoadCallback(engineerPie);
@@ -184,6 +185,7 @@ $scope.board = data;
                                                 var chart = new google.visualization.PieChart(document.getElementById('engineering_pie_points'));
                                                 chart.draw(data, options);
                              }
+*/
 
    });
 
@@ -230,18 +232,24 @@ function collectIE(i) {
 };
 
 google.charts.setOnLoadCallback(codestale);
+/*
 function codestale(){
     //initialize the chart
     var gdata = new google.visualization.DataTable();
     gdata.addColumn('datetime','Days');
-    gdata.addColumn('number','');
-    gdata.addColumn({type: 'string', role: 'tooltip'});
+    gdata.addColumn('number','?');
+    gdata.addColumn({type: 'number', role: 'tooltip'});
     var options = {
         title: 'Time in Code Review',
+        vAxis:{
+                 baselineColor: '#fff',
+                 gridlineColor: '#fff',
+                 textPosition: 'none'
+               },
         legend: { position: 'none' },
-        width: 500
+        width: 500,
     };
-    var chart = new google.charts.Scatter(document.getElementById('codestalehist'));
+    var chart = new google.visualization.ScatterChart(document.getElementById('codestalehist'));
     //get the issues in a particular pipeline
     issueService.zhboard().then(function (data) {
         console.log("the pipeline is "+data.pipelines[9].name);
@@ -253,23 +261,70 @@ function codestale(){
             for(var i=0;i<$scope.codepipeline.length;i++){
             issueService.zhissueevents($scope.codepipeline[i].issue_number).then(function (data) {
 //            console.log(JSON.stringify(data));
-            console.log(data[data.length-1].issue);
+//            console.log(data[data.length-1].issue);
                     for(var i=0;i<data.length;i++){
                     if(data[i].type=="transferIssue"){
                     if(data[i].to_pipeline.name=="Code Review"){
-                    console.log(JSON.stringify(data[i].created_at));
-                    gdata.addRows([[new Date(data[i].created_at),0,'Issue'+data[data.length-1].issue]]);
+//                    console.log(JSON.stringify(data[i].created_at));
+                    console.log(data[data.length-1].issue);
+                    gdata.addRows([[new Date(data[i].created_at),0,data[data.length-1].issue]]);
                     }}}
 
 
                     chart.draw(gdata,google.charts.Scatter.convertOptions(options));
-
                     });
-
             }
             });
 
     };
+*/
+function codestale(){
+    //initialize the chart
+    var gdata = new google.visualization.DataTable();
+    gdata.addColumn({type: 'string', id: 'Issue'});
+    gdata.addColumn({type: 'datetime', id:'Start'});
+    gdata.addColumn({type: 'datetime', id:'Today'});
+    var options = {
+        title: 'Time in Code Review',
+        vAxis:{
+                 baselineColor: '#fff',
+                 gridlineColor: '#fff',
+                 textPosition: 'none'
+               },
+        legend: { position: 'none' },
+        width: 500,
+    };
+    var chart = new google.visualization.Timeline(document.getElementById('codestalehist'));
+    //get the issues in a particular pipeline
+    issueService.zhboard().then(function (data) {
+        console.log("the pipeline is "+data.pipelines[9].name);
+        for(var i=0;i<data.pipelines[9].issues.length;i++){
+        $scope.codepipeline.push(data.pipelines[9].issues[i]);
+        }
+//        console.log(data.pipelines[9].name+" has "+data.pipelines[9].issues.length+" issues");
+    }).then(function() {
+    var issuetostring;
+            for(var i=0;i<$scope.codepipeline.length;i++){
+            issueService.zhissueevents($scope.codepipeline[i].issue_number).then(function (data) {
+//            console.log(JSON.stringify(data));
+//            console.log(data[data.length-1].issue);
+                    for(var i=0;i<data.length;i++){
+                    if(data[i].type=="transferIssue"){
+                    if(data[i].to_pipeline.name=="Code Review"){
+//                    console.log(JSON.stringify(data[i].created_at));
+                    console.log(data[data.length-1].issue);
+                    issuetostring=data[data.length-1].issue;
+                    gdata.addRows([[issuetostring.toString(),new Date(data[i].created_at),new Date(2016,6,15)]]);
+                    }}}
+
+
+                    chart.draw(gdata);
+                    });
+            }
+            });
+
+    };
+
 
 //function callback(){
     //Graph the process control chart
