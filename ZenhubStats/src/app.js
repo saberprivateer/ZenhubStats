@@ -22,14 +22,13 @@ var req = {
   //url: 'http://elections.huffingtonpost.com/pollster/api/polls.json?topic=2016-president&page=30',
   };
 
+//The Pie Charts
 $http(req,{cache: true}).success(function(data){
-console.log('success: '+data);
-console.log('showing data= '+data.pipelines[0].issues.length);
 $scope.board = data;
-//console.log('$scope.board= '+JSON.stringify($scope.board));
+
    google.charts.setOnLoadCallback(designPie);
    google.charts.setOnLoadCallback(engineerPie);
-            function designPie() {
+   function designPie() {
                            var i;
                            var data = new google.visualization.DataTable();
                            data.addColumn('string','Pipeline');
@@ -43,7 +42,7 @@ $scope.board = data;
              //                pieHole: 0.4,
                             // width: 270,
                              //height: 250,
-                             title: 'Design',
+                             title: 'Design by Issues',
              //                tooltip: {
              //                text: 'percentage'},
              //                chartArea: {
@@ -61,8 +60,53 @@ $scope.board = data;
 
                            var chart = new google.visualization.PieChart(document.getElementById('design_pie'));
                            chart.draw(data, options);
-                         }
-        function engineerPie() {
+        }
+   google.charts.setOnLoadCallback(designPiePoints);
+   function designPiePoints() {
+                                   var i;
+                                   var j;
+                                   var stageVal;
+                                   var data = new google.visualization.DataTable();
+                                   data.addColumn('string','Pipeline');
+                                   data.addColumn('number','Points');
+                                   data.addRows($scope.board.pipelines.length);
+                                   for (i=1;i<5;i++){
+                                     data.setCell(i,0,$scope.board.pipelines[i].name);
+//                                     console.log($scope.board.pipelines[i].name + " has "+$scope.board.pipelines[i].issues.length+" issues.");
+                                     stageVal=0;
+                                     for(j=0;j<$scope.board.pipelines[i].issues.length;j++){
+                                     if($scope.board.pipelines[i].issues[j].hasOwnProperty("estimate")){
+                                     stageVal = stageVal + $scope.board.pipelines[i].issues[j].estimate.value;
+
+//                                     console.log("Issue "+$scope.board.pipelines[i].issues[j].issue_number+" is "+$scope.board.pipelines[i].issues[j].estimate.value+" points and in "+$scope.board.pipelines[i].name);
+                                     }
+                                     }
+                                     data.setCell(i,1,stageVal);
+                                     }
+                                   var options = {
+                     //                pieHole: 0.4,
+                                    // width: 270,
+                                     //height: 250,
+                                     title: 'Design by Points',
+                     //                tooltip: {
+                     //                text: 'percentage'},
+                     //                chartArea: {
+                     //                //top: 5,
+                     //                height: '100%'
+                     //                },
+                     colors: ['#f6c7b6', '#f3b49f', '#ec8f6e','#e6693e','#e0440e'],
+                                     pieSliceTextStyle: {
+                                       color: 'white'
+                                     },
+                                     legend: {
+                                     position: 'right'
+                                     }
+                                   };
+
+                                   var chart = new google.visualization.PieChart(document.getElementById('design_pie_points'));
+                                   chart.draw(data, options);
+                }
+   function engineerPie() {
                var i;
                var data = new google.visualization.DataTable();
                data.addColumn('string','Pipeline');
@@ -76,7 +120,7 @@ $scope.board = data;
  //                pieHole: 0.4,
                 // width: 270,
                  //height: 250,
-                 title: 'Engineering',
+                 title: 'Engineering by Issues',
                  colors: ['#9FA8DA', '#7986CB','#9FA8DA', '#7986CB', '#5C6BC0', '#3F51B5', '#3949AB','#9FA8DA', '#7986CB', '#5C6BC0', '#3F51B5', '#3949AB'],
  //                tooltip: {
  //                text: 'percentage'},
@@ -95,19 +139,54 @@ $scope.board = data;
                var chart = new google.visualization.PieChart(document.getElementById('engineering_pie'));
                chart.draw(data, options);
              }
-      });
-//var reqissue = {
-//  method: 'GET',
-//     url: 'http://cors.io/?u=https://api.zenhub.io/p1/repositories/60145876/issues/333?access_token=ba8dd91a4ab09a70684bea407238a515bd759f23d1180078289c68cb98da96dab988b15e7b59e7ad',
-//  //url: 'http://elections.huffingtonpost.com/pollster/api/polls.json?topic=2016-president&page=30',
-//  };
-//
-//$http(reqissue,{cache: true}).success(function(data){
-//console.log('success of issue');
-////console.log(data);
-//$scope.issue = data;
-//
-//});
+   google.charts.setOnLoadCallback(engineeringPiePoints);
+   function engineeringPiePoints() {
+                                                var i;
+                                                var j;
+                                                var stageVal;
+                                                var data = new google.visualization.DataTable();
+                                                data.addColumn('string','Pipeline');
+                                                data.addColumn('number','Points');
+                                                data.addRows($scope.board.pipelines.length);
+                                                for (i=7;i<$scope.board.pipelines.length;i++){
+                                                  data.setCell(i,0,$scope.board.pipelines[i].name);
+//                                                  console.log($scope.board.pipelines[i].name + " has "+$scope.board.pipelines[i].issues.length+" issues.");
+                                                  stageVal=0;
+                                                  for(j=0;j<$scope.board.pipelines[i].issues.length;j++){
+                                                  if($scope.board.pipelines[i].issues[j].hasOwnProperty("estimate")){
+                                                  stageVal = stageVal + $scope.board.pipelines[i].issues[j].estimate.value;
+
+//                                                  console.log("Issue "+$scope.board.pipelines[i].issues[j].issue_number+" is "+$scope.board.pipelines[i].issues[j].estimate.value+" points and in "+$scope.board.pipelines[i].name);
+                                                  }
+                                                  }
+                                                  data.setCell(i,1,stageVal);
+                                                  }
+                                                var options = {
+                                  //                pieHole: 0.4,
+                                                 // width: 270,
+                                                  //height: 250,
+                                                  title: 'Engineering by Points',
+                                  //                tooltip: {
+                                  //                text: 'percentage'},
+                                  //                chartArea: {
+                                  //                //top: 5,
+                                  //                height: '100%'
+                                  //                },
+                                  colors: ['#9FA8DA', '#7986CB','#9FA8DA', '#7986CB', '#5C6BC0', '#3F51B5', '#3949AB','#9FA8DA', '#7986CB', '#5C6BC0', '#3F51B5', '#3949AB'],
+                                                  pieSliceTextStyle: {
+                                                    color: 'white'
+                                                  },
+                                                  legend: {
+                                                  position: 'right'
+                                                  }
+                                                };
+
+                                                var chart = new google.visualization.PieChart(document.getElementById('engineering_pie_points'));
+                                                chart.draw(data, options);
+                             }
+
+   });
+
 
 var fetch = function() {
 var at = 'ba8dd91a4ab09a70684bea407238a515bd759f23d1180078289c68cb98da96dab988b15e7b59e7ad';
@@ -117,56 +196,90 @@ var at = 'ba8dd91a4ab09a70684bea407238a515bd759f23d1180078289c68cb98da96dab988b1
             console.log('Success of fetch');
             return data;
         });
-//            console.log('fetch after http '+data);
-
 };
-//
-//$scope.bi = null;
-//    dataService.getData().then(function(dataResponse) {
-//        $scope.bi = dataResponse;
-//    });
-//console.log(JSON.stringify($scope.bi)+" outside");
 
-$scope.scatterdraw = function() {
-//var issue_info={};
-//var i;
-//issue_info=fetch();
-//console.log(issue_info + "just so");
-////for(i=500;i<510;i++){
-////issue_info = issueService.zhissuedata(522).then(function (data) {
-////                    return data;
-////                    console.log(JSON.stringify(data) + "pipeline");
-////                      console.log(issue_info.pipeline.name + "pipeline");
-////                });
-////};
-//console.log(JSON.stringify(issue_info) + "pipeline");
-//var board_info;
+var arrayWithIds = [500, 501, 502, 503, 504, 505, 506]
+$scope.resources = [];
+$scope.issue_hold;
 
-//https://tylermcginnis.com/angularjs-factory-vs-service-vs-provider-5f426cfe6b8c#.lmx54idqm
-issueService.zhboard().then(function (data) {
-$scope.bi = data.pipelines[9].issues;
-//console.log(JSON.stringify($scope.bi));
+for (var j = 0; j < arrayWithIds.length; j++) {
+    issueService.zhissuedata(arrayWithIds[j]).then(function(data) {
+        $scope.resources.push(data.pipeline);
+    },function(error) {
+        alert(error.message);
+    });
+}
+
+
+    $scope.codepipeline = [];
+    $scope.issue_info = [];
+    $scope.track = 0;
+
+function collectIE(i) {
+    issueService.zhissueevents(501).then(function (data) {
+    console.log("length should be "+$scope.codepipeline.length);
+    for(var j=0;j<data.length;j++){
+    $scope.issue_info.push(data[j].type);
+    }
+    if(i<$scope.codepipeline.length){i++;}
+    }).then(function () {
+       if(i<$scope.codepipeline.length){
+       collectIE(i);
+       }
+    });
+};
+
 google.charts.setOnLoadCallback(codestale);
-function codestale () {
-var gdata = new google.visualization.DataTable();
-gdata.addColumn('number','Issue');
-gdata.addColumn('number','Days');
-for(var i=0;i<$scope.bi.length;i++){
-issueService.zhissueevents(501).then(function (data){
-gdata.addRows([[0, 55]]);
-//console.log(JSON.stringify(data));
-});
-};
-console.log(JSON.stringify(gdata));
-var options = {
-          title: 'Time in Code Review',
-          legend: { position: 'none' },
-        };
+function codestale(){
+    //initialize the chart
+    var gdata = new google.visualization.DataTable();
+    gdata.addColumn('datetime','Days');
+    gdata.addColumn('number','');
+    gdata.addColumn({type: 'string', role: 'tooltip'});
+    var options = {
+        title: 'Time in Code Review',
+        legend: { position: 'none' },
+        width: 500
+    };
+    var chart = new google.charts.Scatter(document.getElementById('codestalehist'));
+    //get the issues in a particular pipeline
+    issueService.zhboard().then(function (data) {
+        console.log("the pipeline is "+data.pipelines[9].name);
+        for(var i=0;i<data.pipelines[9].issues.length;i++){
+        $scope.codepipeline.push(data.pipelines[9].issues[i]);
+        }
+//        console.log(data.pipelines[9].name+" has "+data.pipelines[9].issues.length+" issues");
+    }).then(function() {
+            for(var i=0;i<$scope.codepipeline.length;i++){
+            issueService.zhissueevents($scope.codepipeline[i].issue_number).then(function (data) {
+//            console.log(JSON.stringify(data));
+            console.log(data[data.length-1].issue);
+                    for(var i=0;i<data.length;i++){
+                    if(data[i].type=="transferIssue"){
+                    if(data[i].to_pipeline.name=="Code Review"){
+                    console.log(JSON.stringify(data[i].created_at));
+                    gdata.addRows([[new Date(data[i].created_at),0,'Issue'+data[data.length-1].issue]]);
+                    }}}
 
-        var chart = new google.visualization.Histogram(document.getElementById('codestalehist'));
-        chart.draw(gdata, options);
 
-}});
+                    chart.draw(gdata,google.charts.Scatter.convertOptions(options));
+
+                    });
+
+            }
+            });
+
+    };
+
+//function callback(){
+    //Graph the process control chart
+//    google.charts.setOnLoadCallback(codepcc);
+//    };
+//        var gdata = new google.visualization.DataTable();
+//        gdata.addColumn('number','Issue');
+//        gdata.addColumn('number','Days');
+//        console.log(JSON.stringify($scope.codepipeline));
+//        var chart = new google.visualization.Histogram(document.getElementById('codestalehist'));
 
 google.charts.setOnLoadCallback(scatterplot);
 function scatterplot () {
@@ -199,7 +312,7 @@ function scatterplot () {
           width: 800,
           height: 500,
           chart: {
-            title: 'Process Control Diagram',
+            title: 'Process Control Diagram 2',
             subtitle: 'Testing'
           },
           hAxis: {title: 'Date'},
@@ -209,7 +322,6 @@ function scatterplot () {
         var chart = new google.charts.Scatter(document.getElementById('scatterchart_material'));
 
         chart.draw(data, google.charts.Scatter.convertOptions(options));
-};
 };
 
 
@@ -259,6 +371,7 @@ zhsApp.service('issueService', function ($http) {
         });
 
     }
+
     this.zhissueevents = function(issue_number){
 
             var dataUrl = "http://cors.io/?u=https://api.zenhub.io/p1/repositories/60145876/issues/";
@@ -270,11 +383,12 @@ zhsApp.service('issueService', function ($http) {
                 dataType: "json",
                 url: dataUrl+issue_number+"/events?access_token="+at
             })
+//            .then( function(data, status, headers, config) {
             .then( function(data, status, headers, config) {
-
                 // this callback will be called asynchronously
                 // when the response is available
-
+//                console.log(issue_number+ " issue_number");
+                data.data.push({"issue":issue_number});
                 return data.data;
 
             }, function (error) {console.log('zhissueevents totally errored');
