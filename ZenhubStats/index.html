@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <title>Zenhub Stats</title>
 
+    <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="images/favicon-96x96.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="images/favicon-16x16.png">
 
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     <link rel="stylesheet"
@@ -59,35 +62,41 @@
 </div>
 
 
-    <!--<div layout="row">-->
-        <!--<div flex-offset="5">-->
-            <!--<pre style="overflow:hidden" id="design_pie"></pre>-->
-        <!--</div>-->
-        <!--<div flex-offset="5">-->
-            <!--<pre style="overflow:hidden" id="engineering_pie"></pre>-->
-        <!--</div>-->
-    <!--</div>-->
+    <div layout="row">
+        <div flex-offset="5">
+            <pre style="overflow:hidden" id="design_pie"></pre>
+        </div>
+        <div flex-offset="5">
+            <pre style="overflow:hidden" id="engineering_pie"></pre>
+        </div>
+    </div>
 
-<!--<div layout="row">-->
-    <!--<div flex-offset="5">-->
-        <!--<pre style="overflow:hidden" id="design_pie_points"></pre>-->
-    <!--</div>-->
-    <!--<div flex-offset="5">-->
-        <!--<pre style="overflow:hidden" id="engineering_pie_points"></pre>-->
-    <!--</div>-->
-<!--</div>-->
+<div layout="row">
+    <div flex-offset="5">
+        <pre style="overflow:hidden" id="design_pie_points"></pre>
+    </div>
+    <div flex-offset="5">
+        <pre style="overflow:hidden" id="engineering_pie_points"></pre>
+    </div>
+</div>
 
 
 
 <div flex-offset="5">
+    {{averagedays.length}} in Code Review - Average Days in Code Review = {{averagedays.codereview}}
     <pre style="overflow:hidden" id="codestalehist"></pre>
+</div>
+
+<div flex-offset="5">
+    {{averagedaystesting.length}} in Testing - Average Days in Testing = {{averagedaystesting.testreview}}
+    <pre style="overflow:hidden" id="teststalehist"></pre>
 
 </div>
 
-    <div flex-offset="5">
-        <pre style="overflow:hidden" id="scatterchart_material"></pre>
+    <!--<div flex-offset="5">-->
+        <!--<pre style="overflow:hidden" id="codestalehistmaterial"></pre>-->
 
-    </div>
+ <!--</div>-->
 
     <div>
         <md-content>
