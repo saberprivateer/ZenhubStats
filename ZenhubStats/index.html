@@ -48,8 +48,8 @@
 
     <div layout="row" flex-offset="5" layout-align="start center">
         Product Development
-        <md-switch style="margin:10px" ng-model="repo" ng-true-value="'Product Development'"
-                   ng-false-value="'Analytics'" class="md-warn">
+        <md-switch style="margin:10px" ng-model="repo" ng-true-value="'Analytics'"
+                   ng-false-value="'ProdDev'" ng-change="onRepoChange(repo)" class="md-warn">
             Analytics
         </md-switch>
     </div>

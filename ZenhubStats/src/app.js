@@ -6,7 +6,7 @@ var zhsApp = angular.module('zhsApp', ['ngMaterial'])
     .primaryPalette('indigo')
     .accentPalette('yellow'); })
     .run(function($log){
-        $log.debug("MyApp is ready!");
+        $log.debug("zhsApp is ready!");
         })
     .config(function($httpProvider){
         delete $httpProvider.defaults.headers.common['X-Requested-With'];
@@ -15,6 +15,11 @@ var zhsApp = angular.module('zhsApp', ['ngMaterial'])
 zhsApp.controller('zhsCtrl', function($scope, $http, issueService, dataService){
 
       google.charts.load('current', {'packages':['corechart','scatter','timeline']});
+
+
+$scope.onRepoChange = function(state) {
+                console.log(state);
+             };
 
 var req = {
   method: 'GET',
@@ -72,13 +77,10 @@ $scope.board = data;
                                    data.addRows($scope.board.pipelines.length);
                                    for (i=1;i<5;i++){
                                      data.setCell(i,0,$scope.board.pipelines[i].name);
-//                                     console.log($scope.board.pipelines[i].name + " has "+$scope.board.pipelines[i].issues.length+" issues.");
                                      stageVal=0;
                                      for(j=0;j<$scope.board.pipelines[i].issues.length;j++){
                                      if($scope.board.pipelines[i].issues[j].hasOwnProperty("estimate")){
                                      stageVal = stageVal + $scope.board.pipelines[i].issues[j].estimate.value;
-
-//                                     console.log("Issue "+$scope.board.pipelines[i].issues[j].issue_number+" is "+$scope.board.pipelines[i].issues[j].estimate.value+" points and in "+$scope.board.pipelines[i].name);
                                      }
                                      }
                                      data.setCell(i,1,stageVal);
@@ -150,13 +152,10 @@ $scope.board = data;
                                                 data.addRows($scope.board.pipelines.length);
                                                 for (i=7;i<$scope.board.pipelines.length;i++){
                                                   data.setCell(i,0,$scope.board.pipelines[i].name);
-//                                                  console.log($scope.board.pipelines[i].name + " has "+$scope.board.pipelines[i].issues.length+" issues.");
                                                   stageVal=0;
                                                   for(j=0;j<$scope.board.pipelines[i].issues.length;j++){
                                                   if($scope.board.pipelines[i].issues[j].hasOwnProperty("estimate")){
                                                   stageVal = stageVal + $scope.board.pipelines[i].issues[j].estimate.value;
-
-//                                                  console.log("Issue "+$scope.board.pipelines[i].issues[j].issue_number+" is "+$scope.board.pipelines[i].issues[j].estimate.value+" points and in "+$scope.board.pipelines[i].name);
                                                   }
                                                   }
                                                   data.setCell(i,1,stageVal);
@@ -309,18 +308,13 @@ function codestale(){
             for(var i=0;i<$scope.codepipeline.length;i++){
             issueService.zhissueevents($scope.codepipeline[i].issue_number).then(function (data) {
             var today = new Date();
-//            console.log(JSON.stringify(data));
-//            console.log(data[data.length-1].issue);
                     for(var i=0;i<data.length;i++){
                     if(data[i].type=="transferIssue"){
                     if(data[i].to_pipeline.name=="Code Review"){
-//                    console.log(JSON.stringify(data[i].created_at));
-//                    console.log(data[data.length-1].issue);
                     issuetostring=data[data.length-1].issue;
                     var yesterday = new Date(data[i].created_at);
                     var timeWait = Math.round((today - yesterday)/$scope.oneDay);
                     $scope.averagedays.push(timeWait);
-//                    console.log($scope.averagedays);
                     gdata.addRows([[issuetostring.toString(),new Date(data[i].created_at),new Date(Date())]]);
                     }}}
 
@@ -359,24 +353,18 @@ function teststale(){
         for(var i=0;i<data.pipelines[10].issues.length;i++){
         $scope.testpipeline.push(data.pipelines[10].issues[i]);
         }
-//        console.log(data.pipelines[9].name+" has "+data.pipelines[9].issues.length+" issues");
     }).then(function() {
     var issuetostring;
             console.log($scope.testpipeline.length+" is the # in testing");
             for(var i=0;i<$scope.testpipeline.length;i++){
-//            console.log("looking at #"+i+" which is issue "+$scope.testpipeline[i].issue_number);
             issueService.zhissueevents($scope.testpipeline[i].issue_number).then(function (data) {
             var today = new Date();
-//            console.log("There are "+data[data.length-1].issue+" events for this issue");
-//            console.log(JSON.stringify(data));
                     var addData = false;
                     for(var i=0;i<data.length-1;i++){
                     addData=false;
                     issuetostring=data[data.length-1].issue;
                     if(data.length==2){
                     addData=true;
-                    console.log(issuetostring+" data length 2 fired and addData is "+addData);
-                    console.log(data[i].created_at+" does created data register?");
                     }
                     if(data[i].type=="transferIssue"){
                     if(data[i].to_pipeline.name=="Testing"){
@@ -389,7 +377,6 @@ function teststale(){
 
                     if(addData){
                     $scope.averagedaystesting.push(timeWait);
-//                    console.log($scope.averagedays);
                     gdataT.addRows([[issuetostring.toString(),new Date(data[i].created_at),new Date(Date())]]);
                     i=data.length;
                     }
@@ -402,9 +389,7 @@ function teststale(){
                         total = total+$scope.averagedaystesting[j];
                     }
                     $scope.averagedaystesting.testreview = Math.round((total/$scope.averagedaystesting.length));
-//                    console.log($scope.averagedaystesting.testreview+" total is currently");
                     chart.draw(gdataT,options);
-//                    console.log("at this time gdataT is "+gdataT.length+" long");
                     });
 
             }
@@ -413,11 +398,6 @@ function teststale(){
             )
 
     };
-
-
-$scope.checkform = function(thing) {
-console.log($scope.issue_number);
-};
 
 
 });
@@ -442,7 +422,7 @@ zhsApp.service('issueService', function ($http) {
 
             return data.data;
 
-        }, function (error, status) {console.log('zhissuedata totally errored b/c of '+status);
+        }, function (error) {console.log('zhissuedata totally errored');
 
             // called asynchronously if an error occurs
             // or server returns response with an error status.
@@ -461,15 +441,15 @@ zhsApp.service('issueService', function ($http) {
                 dataType: "json",
                 url: dataUrl+issue_number+"/events?access_token="+at
             })
-//            .then( function(data, status, headers, config) {
             .then( function(data, status, headers, config) {
                 // this callback will be called asynchronously
                 // when the response is available
-//                console.log(issue_number+ " issue_number");
+
+                //Janky way to pass the issue # with the payload. Should refactor the JSON
                 data.data.push({"issue":issue_number});
                 return data.data;
 
-            }, function (error,status) {console.log('zhissueevents totally errored because of '+status);
+            }, function (error) {console.log('zhissueevents totally errored');
 
                 // called asynchronously if an error occurs
                 // or server returns response with an error status.
