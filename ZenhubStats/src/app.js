@@ -18,7 +18,7 @@ zhsApp.controller('zhsCtrl', function($scope, $http, issueService, githubService
 
 
 $scope.onRepoChange = function(state) {
-                console.log(state);
+//                console.log(state);
              };
 
 var req = {
@@ -385,7 +385,41 @@ function teststale(){
 $scope.onSubmitKey = function() {
 
 githubService.issueSearch($scope.user.key).then( function (data){
-console.log(JSON.stringify(data)+" from github");
+console.log("There are "+data.total_count+" issues found in this search");
+//console.log(JSON.stringify(data.items[1]));
+var team;
+var subteam;
+for(var i=0;i<data.items.length;i++){
+team="Client/Viewer Team"
+subteam="N/A";
+for(var j=0;j<data.items[i].labels.length;j++){
+if(data.items[i].labels[j].name=="Streaming Team"){
+team="Streaming Team";
+}
+if(data.items[i].labels[j].name=="windows"){
+subteam="windows";
+}
+if(data.items[i].labels[j].name=="iOS"){
+subteam="iOS";
+}
+if(data.items[i].labels[j].name=="web"){
+subteam="web";
+}
+if(data.items[i].labels[j].name=="android"){
+subteam="android";
+}
+if(data.items[i].labels[j].name=="services"){
+subteam="services";
+}
+if(data.items[i].labels[j].name=="macOS"){
+subteam="macOS";
+}
+
+
+}
+
+console.log(data.items[i].number+" issue on the "+team+" for "+subteam);
+}
 });
 
 };
@@ -396,15 +430,16 @@ console.log(JSON.stringify(data)+" from github");
 zhsApp.service('githubService', function ($http){
 
 this.issueSearch = function(key){
-var dataUrl= "https://api.github.com/";
+var dataUrl= "https://api.github.com/search/issues?q=repo:Mobcrush/Product-Development+closed:2016-07-11..2016-07-15";
 
 return $http({
 method: 'GET',
 dataType: "json",
-url: dataUrl+"user",
+url: dataUrl,
 headers: {"Authorization": "token "+key}
 }).then( function(data, status, headers, config) {
 
+//console.log(JSON.stringify(data));
 return data.data;
 
 });
