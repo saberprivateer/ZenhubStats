@@ -43,13 +43,13 @@
             <input minlength="30" ng-model="user.key" value="">
         </md-input-container>
 
-        <md-button class="md-raised" ng-click="checkform(issue_number)">Submit</md-button>
+        <md-button class="md-raised" ng-click="onSubmitKey(user.key)">Submit</md-button>
     </div>
 
     <div layout="row" flex-offset="5" layout-align="start center">
         Product Development
         <md-switch style="margin:10px" ng-model="repo" ng-true-value="'Analytics'"
-                   ng-false-value="'ProdDev'" ng-change="onRepoChange(repo)" class="md-warn">
+                   ng-false-value="'ProdDev'" ng-change="onRepoChange(user.key)" class="md-warn">
             Analytics
         </md-switch>
     </div>

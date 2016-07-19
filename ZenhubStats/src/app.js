@@ -12,7 +12,7 @@ var zhsApp = angular.module('zhsApp', ['ngMaterial'])
         delete $httpProvider.defaults.headers.common['X-Requested-With'];
 });
 
-zhsApp.controller('zhsCtrl', function($scope, $http, issueService, dataService){
+zhsApp.controller('zhsCtrl', function($scope, $http, issueService, githubService){
 
       google.charts.load('current', {'packages':['corechart','scatter','timeline']});
 
@@ -31,8 +31,8 @@ $http(req,{cache: true}).success(function(data){
 $scope.board = data;
 
 
-   google.charts.setOnLoadCallback(designPie);
-   google.charts.setOnLoadCallback(engineerPie);
+//   google.charts.setOnLoadCallback(designPie);
+//   google.charts.setOnLoadCallback(engineerPie);
    function designPie() {
                            var i;
                            var data = new google.visualization.DataTable();
@@ -66,7 +66,8 @@ $scope.board = data;
                            var chart = new google.visualization.PieChart(document.getElementById('design_pie'));
                            chart.draw(data, options);
         }
-   google.charts.setOnLoadCallback(designPiePoints);
+
+//   google.charts.setOnLoadCallback(designPiePoints);
    function designPiePoints() {
                                    var i;
                                    var j;
@@ -141,7 +142,7 @@ $scope.board = data;
                var chart = new google.visualization.PieChart(document.getElementById('engineering_pie'));
                chart.draw(data, options);
              }
-   google.charts.setOnLoadCallback(engineeringPiePoints);
+//   google.charts.setOnLoadCallback(engineeringPiePoints);
    function engineeringPiePoints() {
                                                 var i;
                                                 var j;
@@ -187,28 +188,8 @@ $scope.board = data;
 
    });
 
-
-var fetch = function() {
-var at = 'ba8dd91a4ab09a70684bea407238a515bd759f23d1180078289c68cb98da96dab988b15e7b59e7ad';
-    $http.get('http://cors.io/?u=https://api.zenhub.io/p1/repositories/60145876/board/?access_token='+at)
-        .then(function(data)
-        {
-            console.log('Success of fetch');
-            return data;
-        });
-};
-
-var arrayWithIds = [500, 501, 502, 503, 504, 505, 506]
 $scope.resources = [];
 $scope.issue_hold;
-
-for (var j = 0; j < arrayWithIds.length; j++) {
-    issueService.zhissuedata(arrayWithIds[j]).then(function(data) {
-        $scope.resources.push(data.pipeline);
-    },function(error) {
-        alert(error.message);
-    });
-}
 
 
     $scope.codepipeline = [];
@@ -231,10 +212,10 @@ function collectIE(i) {
 };
 
 //google.charts.setOnLoadCallback(codestalematerial);
-google.charts.setOnLoadCallback(codestale);
-google.charts.setOnLoadCallback(teststale);
+//google.charts.setOnLoadCallback(codestale);
+//google.charts.setOnLoadCallback(teststale);
 
-/*function codestalematerial(){
+function codestalematerial(){
     //initialize the chart
     var gdata = new google.visualization.DataTable();
     gdata.addColumn('datetime','Days');
@@ -277,7 +258,7 @@ google.charts.setOnLoadCallback(teststale);
             }
             });
 
-    };*/
+    };
 
 $scope.oneDay = 24*60*60*1000;
 $scope.averagedays=[];
@@ -401,6 +382,34 @@ function teststale(){
 
     };
 
+$scope.onSubmitKey = function() {
+
+githubService.issueSearch($scope.user.key).then( function (data){
+console.log(JSON.stringify(data)+" from github");
+});
+
+};
+
+});
+
+
+zhsApp.service('githubService', function ($http){
+
+this.issueSearch = function(key){
+var dataUrl= "https://api.github.com/";
+
+return $http({
+method: 'GET',
+dataType: "json",
+url: dataUrl+"user",
+headers: {"Authorization": "token "+key}
+}).then( function(data, status, headers, config) {
+
+return data.data;
+
+});
+
+}
 
 });
 
@@ -482,21 +491,4 @@ zhsApp.service('issueService', function ($http) {
                 // or server returns response with an error status.
             });
         }
-});
-
-zhsApp.service('dataService', function($http) {
-//    delete $http.defaults.headers.common['X-Requested-With'];
-  var dataUrl = "http://cors.io/?u=https://api.zenhub.io/p1/repositories/60145876/board";
-              var at = 'ba8dd91a4ab09a70684bea407238a515bd759f23d1180078289c68cb98da96dab988b15e7b59e7ad';
-
-
-    this.getData = function() {
-        // $http() returns a $promise that we can add handlers with .then()
-        return $http({
-            method: 'GET',
-            url: dataUrl+"?access_token="+at
-//            params: 'limit=10, sort_by=created:desc',
-//            headers: {'Authorization': 'Token token=xxxxYYYYZzzz'}
-         });
-     }
 });
