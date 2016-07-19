@@ -323,6 +323,7 @@ function codestale(){
                         total = total+$scope.averagedays[i];
                     }
                     $scope.averagedays.codereview = Math.round((total/$scope.averagedays.length));
+                    gdata.sort(1);
                     chart.draw(gdata,options);
 
                     });
@@ -389,6 +390,7 @@ function teststale(){
                         total = total+$scope.averagedaystesting[j];
                     }
                     $scope.averagedaystesting.testreview = Math.round((total/$scope.averagedaystesting.length));
+                    gdataT.sort(1);
                     chart.draw(gdataT,options);
                     });
 
