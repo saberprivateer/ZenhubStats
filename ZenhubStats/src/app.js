@@ -14,7 +14,7 @@ var zhsApp = angular.module('zhsApp', ['ngMaterial'])
 
 zhsApp.controller('zhsCtrl', function($scope, $http, issueService, githubService){
 
-      google.charts.load('current', {'packages':['corechart','scatter','timeline']});
+      google.charts.load('current', {'packages':['corechart','scatter','timeline','table']});
 
 
 $scope.onRepoChange = function(state) {
@@ -383,103 +383,161 @@ function teststale(){
     };
 
 $scope.closedIssues=[];
+$scope.numclosedIssues=[];
+$scope.velBoard=[];
 
 $scope.onSubmitKey = function() {
+    //Setup the chart for this data
+    var tdata = new google.visualization.DataTable();
+    tdata.addColumn('number','Issue');
+    tdata.addColumn('number','Week');
+    tdata.addColumn('number','Estimate');
+    var table = new google.visualization.Table(document.getElementById('table_div'));
 
-githubService.issueSearch($scope.user.key).then( function (data){
-console.log("There are "+data.total_count+" issues found in this search");
-//console.log(JSON.stringify(data.items[1]));
-var team;
-var subteam;
+    //How many issues are there?
+    githubService.issueSearchHead($scope.user.key).then( function (data){
+        $scope.numclosedIssues.push(data);
+    }).then(function () {
 
-//check labels
-for(var i=0;i<data.items.length;i++){
-team="Client/Viewer Team"
-subteam="N/A";
-   for(var j=0;j<data.items[i].labels.length;j++){
-        if(data.items[i].labels[j].name=="Streaming Team"){
-        team="Streaming Team";
+        //Get a page of issues since estimation started
+        for(var p=1;p<Math.round($scope.numclosedIssues/100)+1;p++){
+//       for(var p=1;p<2;p++){
+        console.log("Calling page "+p);
+        githubService.issueSearch($scope.user.key,p).then( function (data){
+            console.log("There are "+data.total_count+" issues found in this search");
+            var team;
+            var subteam;
+
+            //For each issue
+            for(var i=0;i<data.items.length;i++){
+                team="Client/Viewer Team"
+                subteam="N/A";
+                   //Check the issues labels
+                   for(var j=0;j<data.items[i].labels.length;j++){
+                        if(data.items[i].labels[j].name=="Streaming Team"){
+                        team="Streaming Team";
+                        }
+                        if(data.items[i].labels[j].name=="iOS"){
+                        subteam="iOS";
+                        }
+                        if(data.items[i].labels[j].name=="web"){
+                        subteam="web";
+                        }
+                        if(data.items[i].labels[j].name=="android"){
+                        subteam="android";
+                        }
+                        if(data.items[i].labels[j].name=="windows"){
+                        subteam="windows";
+                        }
+                        if(data.items[i].labels[j].name=="services"){
+                        subteam="services";
+                        }
+                        if(data.items[i].labels[j].name=="macOS"){
+                        subteam="macOS";
+                   }
+                }
+                //Only add an issue if it is associated with a team
+                if(subteam!=="N/A"){
+                    $scope.closedIssues.push({
+                    "issue" : data.items[i].number,
+                    "team":team,
+                    "subteam":subteam,
+                    "closed_at": moment(data.items[i].closed_at),
+//                    "estimate": idata.estimate.value
+                    });
+                }
+                }
+
+        //Sort issues based on the week they closed
+        }).then( function() {
+            var dd = "MMM Do";
+            var today = moment();
+            var then = moment("2016-06-26"); //the week we started estimation
+            var weeks = today.week()-then.week()+1;
+            console.log("today is "+today.format(dd)+" and its been "+weeks+" since "+then.format(dd));
+            for(var i=0;i<weeks;i++){
+            //console.log("checking for week "+then.week());
+                for(var j=0;j<$scope.closedIssues.length;j++){
+                  if($scope.closedIssues[j].closed_at.isSame(then,'week')){
+//                  tdata.addRows([
+//                  [$scope.closedIssues[j].issue, $scope.closedIssues[j].closed_at.week(),0]
+//                  ]);
+//                  console.log("calling service for "+$scope.closedIssues[j].issue);
+                    issueService.zhissuedata($scope.closedIssues[j].issue,$scope.closedIssues[j].closed_at.week(),j).then(function(data){
+//                    console.log("issue "+data[0].issue+" "+JSON.stringify(data[0].data));
+                        if(data[0].data.hasOwnProperty('estimate')){
+                        console.log("I want to log the estimate "+data[0].data.estimate.value);
+//                        tdata.setCell(
+//                        data[0].index, 2, data[0].data.estimate.value
+//                        );
+                        tdata.addRows([
+                        [data[0].issue, data[0].week, data[0].data.estimate.value]
+                        ]);
+                        table.draw(tdata);
+                               // [data[0].issue, data[0].week, data[0].data.estimate]
+                                //[$scope.closedIssues[j].issue, $scope.closedIssues[j].closed_at.week(), data.estimate]
+                            //]);
+                        }
+                    });
+                  }
+                }
+                then.add(1,'w');
+            }
+
+
+        }).then(function() {
+            table.draw(tdata);
+            console.log($scope.closedIssues.length);
+        });
         }
-        if(data.items[i].labels[j].name=="windows"){
-        subteam="windows";
-        }
-        if(data.items[i].labels[j].name=="iOS"){
-        subteam="iOS";
-        }
-        if(data.items[i].labels[j].name=="web"){
-        subteam="web";
-        }
-        if(data.items[i].labels[j].name=="android"){
-        subteam="android";
-        }
-        if(data.items[i].labels[j].name=="services"){
-        subteam="services";
-        }
-        if(data.items[i].labels[j].name=="macOS"){
-        subteam="macOS";
-   }
+    });
 }
-
-if(subteam!=="N/A"){
-$scope.closedIssues.push({
-"issue" : data.items[i].number,
-"team":team,
-"subteam":subteam,
-"closed_at":moment(data.items[i].closed_at)
-});
-}
-
-}
-//need to add pagination somewhere!
-}).then( function() {console.log("second part with "+$scope.closedIssues.length);
-var dd = "MMM Do";
-var today = moment();
-var then = moment("2016-06-26");
-var weeks = today.week()-then.week()+1;
-console.log("The week we started was "+then.weeks());
-console.log("today is "+today.format(dd)+" and its been "+weeks+" since "+then.format(dd));
-for(var i=0;i<weeks;i++){
-console.log("checking for week "+then.week());
-for(var j=0;j<$scope.closedIssues.length;j++){
-if($scope.closedIssues[j].closed_at.isSame(then,'week')){
-}
-
-}
-then.add(1,'w');
-}
-
-
-});
-
-};
-
 });
 
 
 zhsApp.service('githubService', function ($http){
 
-this.issueSearch = function(key){
-var dataUrl= "https://api.github.com/search/issues?q=repo:Mobcrush/Product-Development+closed:>2016-06-26&per_page=100";
+    this.issueSearch = function(key,p){
+        var dataUrl= "https://api.github.com/search/issues?q=repo:Mobcrush/Product-Development+closed:>2016-06-26&per_page=50";
 
-return $http({
-method: 'GET',
-dataType: "json",
-url: dataUrl,
-headers: {"Authorization": "token "+key}
-}).then( function(data) {
+        return $http({
+            method: 'GET',
+            dataType: "json",
+            url: dataUrl+"&page="+p,
+            headers: {"Authorization": "token "+key}
+        }).then( function(data) {
 
-console.log(data.headers('link'));
-return data.data;
+//            console.log(data.headers('link'));
+            var results = data.data;
+//            console.log(results.total_count+" total issues");
+            return data.data;
 
-});
+        });
 
-}
+    }
+
+    this.issueSearchHead = function(key) {
+        var dataUrl= "https://api.github.com/search/issues?q=repo:Mobcrush/Product-Development+closed:>2016-06-26&per_page=50";
+
+        return $http({
+            method: 'GET',
+            dataType: "json",
+            url: dataUrl,
+            headers: {"Authorization": "token "+key}
+        }).then( function(data) {
+
+            var results = data.data;
+            return results.total_count;
+
+        });
+
+    }
 
 });
 
 zhsApp.service('issueService', function ($http) {
 
-    this.zhissuedata = function(issue_number){
+    this.zhissuedata = function(issue_number,week,j){
 
         var dataUrl = "http://cors.io/?u=https://api.zenhub.io/p1/repositories/60145876/issues/";
         var at = 'ba8dd91a4ab09a70684bea407238a515bd759f23d1180078289c68cb98da96dab988b15e7b59e7ad';
@@ -494,8 +552,25 @@ zhsApp.service('issueService', function ($http) {
 
             // this callback will be called asynchronously
             // when the response is available
-
-            return data.data;
+            //because rate limit sucks
+            var start = new Date().getTime();
+              for (var i = 0; i < 1e7; i++) {
+                if ((new Date().getTime() - start) > 1000){
+                  break;
+                }
+              }
+            var results = [];
+            results.push({
+            "data":data.data,
+            "issue":issue_number,
+            "week":week,
+            "index":j
+            });
+//            results.data.push({"issue":issue_number});
+//            data.data.push({"week":week});
+//console.log(JSON.stringify(results));
+//console.log("issue is "+results[0].issue);
+            return results;
 
         }, function (error) {console.log('zhissuedata totally errored');
 
