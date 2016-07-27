@@ -8,6 +8,8 @@
     <link rel="icon" type="image/png" sizes="96x96" href="images/favicon-96x96.png">
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon-16x16.png">
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.14.1/moment.min.js"></script>
+
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     <link rel="stylesheet"
           href="http://ajax.googleapis.com/ajax/libs/angular_material/1.1.0-rc2/angular-material.min.css">
@@ -43,13 +45,13 @@
             <input minlength="30" ng-model="user.key" value="">
         </md-input-container>
 
-        <md-button class="md-raised" ng-click="checkform(issue_number)">Submit</md-button>
+        <md-button class="md-raised" ng-click="onSubmitKey(user.key)">Submit</md-button>
     </div>
 
     <div layout="row" flex-offset="5" layout-align="start center">
         Product Development
         <md-switch style="margin:10px" ng-model="repo" ng-true-value="'Analytics'"
-                   ng-false-value="'ProdDev'" ng-change="onRepoChange(repo)" class="md-warn">
+                   ng-false-value="'ProdDev'" ng-change="onRepoChange()" class="md-warn">
             Analytics
         </md-switch>
     </div>
@@ -62,6 +64,9 @@
     </div>
 </div>
 
+<div flex-offset="5">
+    <pre style="overflow:hidden" id="table_div"></pre>
+</div>
 
 <div layout="row">
     <div flex-offset="5">
