@@ -12,7 +12,7 @@ var zhsApp = angular.module('zhsApp', ['ngMaterial'])
         delete $httpProvider.defaults.headers.common['X-Requested-With'];
 });
 
-zhsApp.controller('zhsCtrl', function($scope, $http, issueService, githubService){
+zhsApp.controller('zhsCtrl', function($q, $scope, $http, issueService, githubService){
 
       google.charts.load('current', {'packages':['corechart','scatter','timeline','table']});
 
@@ -292,18 +292,24 @@ function codestale(){
     };
     var chart = new google.visualization.Timeline(document.getElementById('codestalehist'));
     //get the issues in a particular pipeline
-    issueService.zhboard().then(function (data) {
+    var promises = [];
+    issueService
+        .zhboard()
+        .then(function (data)
+        {
 //        console.log("the pipeline is "+data.pipelines[9].name);
-        for(var i=0;i<data.pipelines[9].issues.length;i++){
-        $scope.codepipeline.push(data.pipelines[9].issues[i]);
-        }
-//        console.log(data.pipelines[9].name+" has "+data.pipelines[9].issues.length+" issues");
-    }).then(function() {
-            var issuetostring;
-            for(var i=0;i<$scope.codepipeline.length;i++){
 
-            githubService.issueGet($scope.user.key, $scope.codepipeline[i].issue_number).then(function (data){
-            var teamlabel="null";
+        for(var i=0;i<data.pipelines[9].issues.length;i++){
+//        $scope.codepipeline.push(data.pipelines[9].issues[i]);
+        var promise = githubService.issueGet($scope.user.key, data.pipelines[9].issues[i].issue_number);
+        promises.push(promise);
+        }
+        console.log("after for loop "+JSON.stringify(promises));
+//        console.log(data.pipelines[9].name+" has "+data.pipelines[9].issues.length+" issues");
+    });
+    console.log("before $q.all "+promises);
+    $q.all(promises).then(function(data) {
+            console.log("after promise: "+data);
             $scope.seekIssueNumber = data.number;
             for(var i=0;i<data.labels.length;i++){
             if(data.labels[i].name=="android"){
@@ -323,11 +329,10 @@ function codestale(){
             }
             }
             console.log(data.number+" has "+data.labels.length+" labels and is associated with "+$scope.clientlabel);
+            return issueService.zhissueevents(data.number);
+            }).then(function(data) {
 
-            }).then(function() {
-            console.log($scope.clientlabel);
-            issueService.zhissueevents($scope.seekIssueNumber).then(function (data) {
-
+            var issuetostring;
             var today = new Date();
                     for(var i=0;i<data.length;i++){
                     if(data[i].type=="transferIssue"){
@@ -350,17 +355,8 @@ function codestale(){
                     }
                     );
 
-                    }
-                    );
-
-            //for loop
-            }
             //grabbing the board
-            }
-
-            )
-
-    };
+            };
 
 function teststale(){
     //initialize the chart
@@ -541,7 +537,7 @@ $scope.onSubmitKey = function() {
 });
 
 
-zhsApp.service('githubService', function ($http){
+zhsApp.service('githubService', function ($q, $http){
 
     this.issueSearch = function(key,p){
         var dataUrl= "https://api.github.com/search/issues?q=repo:Mobcrush/Product-Development+closed:>2016-06-26&per_page=50";
@@ -598,7 +594,7 @@ zhsApp.service('githubService', function ($http){
 
 });
 
-zhsApp.service('issueService', function ($http) {
+zhsApp.service('issueService', function ($q, $http) {
 
     this.zhissuedata = function(issue_number,week,j){
 
