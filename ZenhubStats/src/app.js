@@ -215,6 +215,8 @@ function collectIE(i) {
 //google.charts.setOnLoadCallback(codestale);
 //google.charts.setOnLoadCallback(teststale);
 
+
+
 function codestalematerial(){
     //initialize the chart
     var gdata = new google.visualization.DataTable();
@@ -264,14 +266,26 @@ $scope.oneDay = 24*60*60*1000;
 $scope.averagedays=[];
 $scope.averagedaystesting=[];
 $scope.codereviewdays=0;
+$scope.clientlabel = "";
+$scope.seekIssueNumber = 1;
+
+$scope.onStaleSubmit = function() {
+codestale();
+}
+
 function codestale(){
     //initialize the chart
     var gdata = new google.visualization.DataTable();
+    //Add label for platform
+    //Add label for description
     gdata.addColumn({type: 'string', id: 'Issue'});
+    gdata.addColumn({type: 'string', id: 'client'});
     gdata.addColumn({type: 'datetime', id:'Start'});
     gdata.addColumn({type: 'datetime', id:'Today'});
     var options = {
         title: 'Time in Code Review',
+//        timeline: {colorByRowLabel: true},
+//        timeline: {groupByRowLabel: false},
 //        legend: { position: 'none' },
         width: 500,
         height: 400
@@ -285,9 +299,35 @@ function codestale(){
         }
 //        console.log(data.pipelines[9].name+" has "+data.pipelines[9].issues.length+" issues");
     }).then(function() {
-    var issuetostring;
+            var issuetostring;
             for(var i=0;i<$scope.codepipeline.length;i++){
-            issueService.zhissueevents($scope.codepipeline[i].issue_number).then(function (data) {
+
+            githubService.issueGet($scope.user.key, $scope.codepipeline[i].issue_number).then(function (data){
+            var teamlabel="null";
+            $scope.seekIssueNumber = data.number;
+            for(var i=0;i<data.labels.length;i++){
+            if(data.labels[i].name=="android"){
+            $scope.clientlabel = "android";
+            }
+            if(data.labels[i].name=="iOS"){
+            $scope.clientlabel = "iOS";
+            }
+            if(data.labels[i].name=="services"){
+            $scope.clientlabel = "services";
+            }
+            if(data.labels[i].name=="web"){
+            $scope.clientlabel = "web";
+            }
+            if(data.labels[i].name=="Streaming Team"){
+            $scope.clientlabel = "Streaming";
+            }
+            }
+            console.log(data.number+" has "+data.labels.length+" labels and is associated with "+$scope.clientlabel);
+
+            }).then(function() {
+            console.log($scope.clientlabel);
+            issueService.zhissueevents($scope.seekIssueNumber).then(function (data) {
+
             var today = new Date();
                     for(var i=0;i<data.length;i++){
                     if(data[i].type=="transferIssue"){
@@ -296,7 +336,7 @@ function codestale(){
                     var yesterday = new Date(data[i].created_at);
                     var timeWait = Math.round((today - yesterday)/$scope.oneDay);
                     $scope.averagedays.push(timeWait);
-                    gdata.addRows([[issuetostring.toString(),new Date(data[i].created_at),new Date(Date())]]);
+                    gdata.addRows([[issuetostring.toString(),$scope.clientlabel,new Date(data[i].created_at),new Date(Date())]]);
                     }}}
 
                     var total=0;
@@ -304,12 +344,18 @@ function codestale(){
                         total = total+$scope.averagedays[i];
                     }
                     $scope.averagedays.codereview = Math.round((total/$scope.averagedays.length));
-                    gdata.sort(1);
+                    gdata.sort(2);
                     chart.draw(gdata,options);
 
-                    });
+                    }
+                    );
 
+                    }
+                    );
+
+            //for loop
             }
+            //grabbing the board
             }
 
             )
@@ -454,7 +500,7 @@ $scope.onSubmitKey = function() {
             var today = moment();
             var then = moment("2016-06-26"); //the week we started estimation
             var weeks = today.week()-then.week()+1;
-            console.log("today is "+today.format(dd)+" and its been "+weeks+" since "+then.format(dd));
+            console.log("today is "+today.format(dd)+" and its been "+weeks+" weeks since "+then.format(dd));
             for(var i=0;i<weeks;i++){
             //console.log("checking for week "+then.week());
                 for(var j=0;j<$scope.closedIssues.length;j++){
@@ -532,6 +578,23 @@ zhsApp.service('githubService', function ($http){
         });
 
     }
+
+    this.issueGet = function(key,num) {
+            var dataUrl= "https://api.github.com/repos/Mobcrush/Product-Development/issues/"+num;
+
+            return $http({
+                method: 'GET',
+                dataType: "json",
+                url: dataUrl,
+                headers: {"Authorization": "token "+key}
+            }).then( function(data) {
+
+                var results = data.data;
+                return results;
+
+            });
+
+        }
 
 });
 
