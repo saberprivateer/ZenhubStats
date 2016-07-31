@@ -23,7 +23,9 @@ $scope.onRepoChange = function(state) {
 
 var req = {
   method: 'GET',
-     url: 'http://cors.io/?u=https://api.zenhub.io/p1/repositories/60145876/board?access_token=ba8dd91a4ab09a70684bea407238a515bd759f23d1180078289c68cb98da96dab988b15e7b59e7ad',
+//  withCredentials: 'true',
+  headers: 'X-Authentication-Token',
+     url: 'https://api.zenhub.io/p1/repositories/60145876/board?access_token=ba8dd91a4ab09a70684bea407238a515bd759f23d1180078289c68cb98da96dab988b15e7b59e7ad',
   };
 
 //The Pie Charts
@@ -292,24 +294,72 @@ function codestale(){
     };
     var chart = new google.visualization.Timeline(document.getElementById('codestalehist'));
     //get the issues in a particular pipeline
-    var promises = [];
     issueService
         .zhboard()
         .then(function (data)
         {
-//        console.log("the pipeline is "+data.pipelines[9].name);
 
-        for(var i=0;i<data.pipelines[9].issues.length;i++){
-//        $scope.codepipeline.push(data.pipelines[9].issues[i]);
-        var promise = githubService.issueGet($scope.user.key, data.pipelines[9].issues[i].issue_number);
-        promises.push(promise);
+        var promises = [];
+
+        for(var i=0;i<data.pipelines[9].issues.length;i++)
+        {
+            var promise = githubService.issueGet($scope.user.key, data.pipelines[9].issues[i].issue_number);
+            promises.push(promise);
         }
-        console.log("after for loop "+JSON.stringify(promises));
-//        console.log(data.pipelines[9].name+" has "+data.pipelines[9].issues.length+" issues");
-    });
-    console.log("before $q.all "+promises);
-    $q.all(promises).then(function(data) {
-            console.log("after promise: "+data);
+        $q.all(promises).then(function(data) {
+//                    console.log("promise? "+JSON.stringify(promises[0].$$state.status));
+//                    console.log("promise info="+promises[0].$$state);
+                    var data=[];
+                    for(var j=0;j<promises.length;j++){
+                    data=promises[j].$$state.value;
+//                    console.log("this data is "+JSON.stringify(data));
+                    $scope.seekIssueNumber = data.number;
+                    for(var i=0;i<data.labels.length;i++){
+                    if(data.labels[i].name=="android"){
+                    $scope.clientlabel = "android";
+                    }
+                    if(data.labels[i].name=="iOS"){
+                    $scope.clientlabel = "iOS";
+                    }
+                    if(data.labels[i].name=="services"){
+                    $scope.clientlabel = "services";
+                    }
+                    if(data.labels[i].name=="web"){
+                    $scope.clientlabel = "web";
+                    }
+                    if(data.labels[i].name=="Streaming Team"){
+                    $scope.clientlabel = "Streaming";
+                    }
+                    }
+                    console.log(data.number+" has "+data.labels.length+" labels and is associated with "+$scope.clientlabel);
+                    issueService.zhissueeventscodereview(data.number,$scope.clientlabel).then(function(data) {
+//                                  console.log("newservice = "+JSON.stringify(data));
+                                  var issuetostring;
+                                  var team;
+                                  var today = new Date();
+                                          for(var i=0;i<data.length;i++){
+                                          if(data[i].type=="transferIssue"){
+                                          if(data[i].to_pipeline.name=="Code Review"){
+                                          issuetostring=data[data.length-2].issue;
+                                          team=data[data.length-1].team;
+                                          var yesterday = new Date(data[i].created_at);
+                                          var timeWait = Math.round((today - yesterday)/$scope.oneDay);
+                                          $scope.averagedays.push(timeWait);
+                                          gdata.addRows([[issuetostring.toString(),team,new Date(data[i].created_at),new Date(Date())]]);
+                                          }}}
+
+                                          var total=0;
+                                          for(var i=0;i<$scope.averagedays.length;i++){
+                                              total = total+$scope.averagedays[i];
+                                          }
+                                          $scope.averagedays.codereview = Math.round((total/$scope.averagedays.length));
+                                          gdata.sort(2);
+                                          chart.draw(gdata,options);
+
+                                          }
+                                          );
+                    }
+/*    $q.all(promises).then(function(data) {
             $scope.seekIssueNumber = data.number;
             for(var i=0;i<data.labels.length;i++){
             if(data.labels[i].name=="android"){
@@ -353,9 +403,11 @@ function codestale(){
                     chart.draw(gdata,options);
 
                     }
-                    );
+                    );*/
 
             //grabbing the board
+            });
+            });
             };
 
 function teststale(){
@@ -665,15 +717,46 @@ zhsApp.service('issueService', function ($q, $http) {
             });
 
         }
+    this.zhissueeventscodereview = function(issue_number,team){
+
+                var dataUrl = "http://cors.io/?u=https://api.zenhub.io/p1/repositories/60145876/issues/";
+                var at = 'ba8dd91a4ab09a70684bea407238a515bd759f23d1180078289c68cb98da96dab988b15e7b59e7ad';
+
+                // Simple GET request example :
+                return $http({
+                    method: 'GET',
+                    dataType: "json",
+                    url: dataUrl+issue_number+"/events?access_token="+at
+                })
+                .then( function(data, status, headers, config) {
+                    // this callback will be called asynchronously
+                    // when the response is available
+
+                    //Janky way to pass the issue # with the payload. Should refactor the JSON
+                    data.data.push({"issue":issue_number});
+                    data.data.push({"team":team});
+                    return data.data;
+
+                }, function (error) {console.log('zhissueevents totally errored');
+
+                    // called asynchronously if an error occurs
+                    // or server returns response with an error status.
+                });
+
+            }
+
     this.zhboard = function(){
 
-            var dataUrl = "http://cors.io/?u=https://api.zenhub.io/p1/repositories/60145876/board";
+//            var dataUrl = "http://cors.io/?u=https://api.zenhub.io/p1/repositories/60145876/board";
+            var dataUrl = "https://api.zenhub.io/p1/repositories/60145876/board";
             var at = 'ba8dd91a4ab09a70684bea407238a515bd759f23d1180078289c68cb98da96dab988b15e7b59e7ad';
 
             // Simple GET request example :
             return $http({
                 method: 'GET',
                 dataType: "json",
+//                withCredentials: "true",
+                headers: 'X-Authentication-Token',
                 url: dataUrl+"?access_token="+at
             })
             .then( function(data, status, headers, config) {
