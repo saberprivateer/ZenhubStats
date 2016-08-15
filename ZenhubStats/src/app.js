@@ -272,6 +272,7 @@ $scope.clientlabel = "";
 $scope.seekIssueNumber = 1;
 $scope.averagedaysdesignreview=[];
 $scope.averagedaysdesignspec=[];
+$scope.averagedaysinprogress=[];
 
 $scope.onStaleSubmit = function() {
 codestale();
@@ -288,6 +289,108 @@ designreview();
 $scope.onDesignSpec = function() {
 designspec();
 }
+
+$scope.onEIP = function() {
+engineeringinprogress();
+}
+
+$scope.onSprint = function() {
+//sprintgoals();
+}
+
+function engineeringinprogress(){
+                  //initialize the chart
+                  var gdata = new google.visualization.DataTable();
+                  //Add labels
+                  gdata.addColumn({type: 'string', id: 'Issue'});
+                  gdata.addColumn({type: 'string', id: 'client'});
+                  gdata.addColumn({type: 'datetime', id:'Start'});
+                  gdata.addColumn({type: 'datetime', id:'Today'});
+
+                  //Set chart options
+                  var options = {
+                      title: 'Time in Progress',
+              //        timeline: {colorByRowLabel: true},
+              //        timeline: {groupByRowLabel: false},
+              //        legend: { position: 'none' },
+                      width: 500,
+                      height: 400
+                  };
+
+                  //Tell it where to show up in HTML
+                  var chart = new google.visualization.Timeline(document.getElementById('progressgraph'));
+
+                  //get the issues in a particular pipeline (should probably only call this once)
+                  issueService
+                      .zhboard()
+                      .then(function (data)
+                      {
+
+                      var promises = [];
+
+                      //Get the issue numbers in the pipeline
+                      for(var i=0;i<data.pipelines[8].issues.length;i++)
+                      {
+                          var promise = githubService.issueGet($scope.user.key, data.pipelines[8].issues[i].issue_number);
+                          promises.push(promise);
+                      }
+
+                      //Once all the issue data has been gathered, parse through it
+                      $q.all(promises).then(function(data) {
+                                  var data=[];
+                                  for(var j=0;j<promises.length;j++){
+                                  data=promises[j].$$state.value;
+                                  $scope.seekIssueNumber = data.number;
+//                                  $scope.clientlabel = "Needs Design";
+                                  for(var i=0;i<data.labels.length;i++){
+                                  if(data.labels[i].name=="android"){
+                                  $scope.clientlabel = "android";
+                                  }
+                                  if(data.labels[i].name=="iOS"){
+                                  $scope.clientlabel = "iOS";
+                                  }
+                                  if(data.labels[i].name=="services"){
+                                  $scope.clientlabel = "services";
+                                  }
+                                  if(data.labels[i].name=="web"){
+                                  $scope.clientlabel = "web";
+                                  }
+                                  if(data.labels[i].name=="Streaming Team"){
+                                  $scope.clientlabel = "Streaming";
+                                  }
+                                  }
+              //                    console.log(data.number+" has "+data.labels.length+" labels and is associated with "+$scope.clientlabel);
+
+                                  //Find out when the issue came into the pipeline
+                                  issueService.zhissueeventscodereview(data.number,$scope.clientlabel).then(function(data) {
+                                                var issuetostring;
+                                                var team;
+                                                var today = new Date();
+                                                        for(var i=0;i<data.length;i++){
+                                                        if(data[i].type=="transferIssue"){
+//                                                        console.log(data[i].to_pipeline.name);
+                                                        if(data[i].to_pipeline.name=="Engineering In Progress"){
+                                                        issuetostring=data[data.length-2].issue;
+                                                        team=data[data.length-1].team;
+                                                        var yesterday = new Date(data[i].created_at);
+                                                        var timeWait = Math.round((today - yesterday)/$scope.oneDay);
+                                                        $scope.averagedaysinprogress.push(timeWait);
+                                                        gdata.addRows([[issuetostring.toString(),team,new Date(data[i].created_at),new Date(Date())]]);
+                                                        }}}
+
+                                                        var total=0;
+                                                        for(var i=0;i<$scope.averagedaysinprogress.length;i++){
+                                                            total = total+$scope.averagedaysinprogress[i];
+                                                        }
+                                                        $scope.averagedaysinprogress.inprogress = Math.round((total/$scope.averagedaysinprogress.length));
+                                                        gdata.sort(2);
+                                                        chart.draw(gdata,options);
+                                                        }
+                                                        );
+                                  }
+                          });
+                          });
+                          };
 
 function designreview(){
                   //initialize the chart

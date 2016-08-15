@@ -50,6 +50,8 @@
         <md-button class="md-raised" ng-click="onStaleTestSubmit(user.key)">Submit for Testing</md-button>
         <md-button class="md-raised" ng-click="onDesignReview(user.key)">Submit for Design Review</md-button>
         <md-button class="md-raised" ng-click="onDesignSpec(user.key)">Submit for Spec</md-button>
+        <md-button class="md-raised" ng-click="onEIP(user.key)">Engineering in Progress</md-button>
+        <md-button class="md-raised" ng-click="onSprint(user.key)">Sprint Goals</md-button>
     </div>
 
 <!--    <div layout="row" flex-offset="5" layout-align="start center">
@@ -108,7 +110,11 @@
 <div flex-offset="5">
     {{averagedaystesting.length}} in Testing - Average Days in Testing = {{averagedaystesting.testing}}
     <pre style="overflow:hidden" id="teststalehist"></pre>
+</div>
 
+<div flex-offset="5">
+    {{averagedaysinprogress.length}} in Progress - Average Days in Progress = {{averagedaysinprogress.inprogress}}
+    <pre style="overflow:hidden" id="progressgraph"></pre>
 </div>
 
 <!--<div flex-offset="5">-->
