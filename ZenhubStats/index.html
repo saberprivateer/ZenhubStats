@@ -45,24 +45,29 @@
             <input minlength="30" ng-model="user.key" value="">
         </md-input-container>
 
-        <md-button class="md-raised" ng-click="onSubmitKey(user.key)">Submit</md-button>
+        <!--<md-button class="md-raised" ng-click="onSubmitKey(user.key)">Submit</md-button>-->
         <md-button class="md-raised" ng-click="onStaleSubmit(user.key)">Submit for Code Review</md-button>
+        <md-button class="md-raised" ng-click="onStaleTestSubmit(user.key)">Submit for Testing</md-button>
+        <md-button class="md-raised" ng-click="onDesignReview(user.key)">Submit for Design Review</md-button>
+        <md-button class="md-raised" ng-click="onDesignSpec(user.key)">Submit for Spec</md-button>
+        <md-button class="md-raised" ng-click="onEIP(user.key)">Engineering in Progress</md-button>
+        <md-button class="md-raised" ng-click="onSprint(user.key)">Sprint Goals</md-button>
     </div>
 
-    <div layout="row" flex-offset="5" layout-align="start center">
+<!--    <div layout="row" flex-offset="5" layout-align="start center">
         Product Development
         <md-switch style="margin:10px" ng-model="repo" ng-true-value="'Analytics'"
                    ng-false-value="'ProdDev'" ng-change="onRepoChange()" class="md-warn">
             Analytics
         </md-switch>
-    </div>
+    </div>-->
 
-    <div flex-offset="5">
+<!--    <div flex-offset="5">
         <md-input-container>
             <label>Issue Number</label>
             <input maxlength="4" ng-model="issue_number">
         </md-input-container>
-    </div>
+    </div>-->
 </div>
 
 <div flex-offset="5">
@@ -87,6 +92,15 @@
     </div>
 </div>
 
+<div flex-offset="5">
+    {{averagedaysdesignreview.length}} in Design Review - Average Days in Design Review = {{averagedaysdesignreview.designreview}}
+    <pre style="overflow:hidden" id="designreview"></pre>
+</div>
+
+<div flex-offset="5">
+    {{averagedaysdesignspec.length}} in Design Review - Average Days in Design Review = {{averagedaysdesignreview.designspec}}
+    <pre style="overflow:hidden" id="designspec"></pre>
+</div>
 
 <div flex-offset="5">
     {{averagedays.length}} in Code Review - Average Days in Code Review = {{averagedays.codereview}}
@@ -94,9 +108,13 @@
 </div>
 
 <div flex-offset="5">
-    {{averagedaystesting.length}} in Testing - Average Days in Testing = {{averagedaystesting.testreview}}
+    {{averagedaystesting.length}} in Testing - Average Days in Testing = {{averagedaystesting.testing}}
     <pre style="overflow:hidden" id="teststalehist"></pre>
+</div>
 
+<div flex-offset="5">
+    {{averagedaysinprogress.length}} in Progress - Average Days in Progress = {{averagedaysinprogress.inprogress}}
+    <pre style="overflow:hidden" id="progressgraph"></pre>
 </div>
 
 <!--<div flex-offset="5">-->

@@ -12,7 +12,7 @@ var zhsApp = angular.module('zhsApp', ['ngMaterial'])
         delete $httpProvider.defaults.headers.common['X-Requested-With'];
 });
 
-zhsApp.controller('zhsCtrl', function($scope, $http, issueService, githubService){
+zhsApp.controller('zhsCtrl', function($q, $scope, $http, issueService, githubService){
 
       google.charts.load('current', {'packages':['corechart','scatter','timeline','table']});
 
@@ -23,7 +23,9 @@ $scope.onRepoChange = function(state) {
 
 var req = {
   method: 'GET',
-     url: 'http://cors.io/?u=https://api.zenhub.io/p1/repositories/60145876/board?access_token=ba8dd91a4ab09a70684bea407238a515bd759f23d1180078289c68cb98da96dab988b15e7b59e7ad',
+//  withCredentials: 'true',
+  headers: 'X-Authentication-Token',
+     url: 'https://api.zenhub.io/p1/repositories/60145876/board?access_token=ba8dd91a4ab09a70684bea407238a515bd759f23d1180078289c68cb98da96dab988b15e7b59e7ad',
   };
 
 //The Pie Charts
@@ -31,8 +33,8 @@ $http(req,{cache: true}).success(function(data){
 $scope.board = data;
 
 
-//   google.charts.setOnLoadCallback(designPie);
-//   google.charts.setOnLoadCallback(engineerPie);
+   google.charts.setOnLoadCallback(designPie);
+   google.charts.setOnLoadCallback(engineerPie);
    function designPie() {
                            var i;
                            var data = new google.visualization.DataTable();
@@ -67,7 +69,7 @@ $scope.board = data;
                            chart.draw(data, options);
         }
 
-//   google.charts.setOnLoadCallback(designPiePoints);
+   google.charts.setOnLoadCallback(designPiePoints);
    function designPiePoints() {
                                    var i;
                                    var j;
@@ -142,7 +144,7 @@ $scope.board = data;
                var chart = new google.visualization.PieChart(document.getElementById('engineering_pie'));
                chart.draw(data, options);
              }
-//   google.charts.setOnLoadCallback(engineeringPiePoints);
+   google.charts.setOnLoadCallback(engineeringPiePoints);
    function engineeringPiePoints() {
                                                 var i;
                                                 var j;
@@ -268,20 +270,232 @@ $scope.averagedaystesting=[];
 $scope.codereviewdays=0;
 $scope.clientlabel = "";
 $scope.seekIssueNumber = 1;
+$scope.averagedaysdesignreview=[];
+$scope.averagedaysdesignspec=[];
+$scope.averagedaysinprogress=[];
 
 $scope.onStaleSubmit = function() {
 codestale();
 }
 
-function codestale(){
+$scope.onStaleTestSubmit = function() {
+teststale();
+}
+
+$scope.onDesignReview = function() {
+designreview();
+}
+
+$scope.onDesignSpec = function() {
+designspec();
+}
+
+$scope.onEIP = function() {
+engineeringinprogress();
+}
+
+$scope.onSprint = function() {
+//sprintgoals();
+}
+
+function engineeringinprogress(){
+                  //initialize the chart
+                  var gdata = new google.visualization.DataTable();
+                  //Add labels
+                  gdata.addColumn({type: 'string', id: 'Issue'});
+                  gdata.addColumn({type: 'string', id: 'client'});
+                  gdata.addColumn({type: 'datetime', id:'Start'});
+                  gdata.addColumn({type: 'datetime', id:'Today'});
+
+                  //Set chart options
+                  var options = {
+                      title: 'Time in Progress',
+              //        timeline: {colorByRowLabel: true},
+              //        timeline: {groupByRowLabel: false},
+              //        legend: { position: 'none' },
+                      width: 500,
+                      height: 400
+                  };
+
+                  //Tell it where to show up in HTML
+                  var chart = new google.visualization.Timeline(document.getElementById('progressgraph'));
+
+                  //get the issues in a particular pipeline (should probably only call this once)
+                  issueService
+                      .zhboard()
+                      .then(function (data)
+                      {
+
+                      var promises = [];
+
+                      //Get the issue numbers in the pipeline
+                      for(var i=0;i<data.pipelines[8].issues.length;i++)
+                      {
+                          var promise = githubService.issueGet($scope.user.key, data.pipelines[8].issues[i].issue_number);
+                          promises.push(promise);
+                      }
+
+                      //Once all the issue data has been gathered, parse through it
+                      $q.all(promises).then(function(data) {
+                                  var data=[];
+                                  for(var j=0;j<promises.length;j++){
+                                  data=promises[j].$$state.value;
+                                  $scope.seekIssueNumber = data.number;
+//                                  $scope.clientlabel = "Needs Design";
+                                  for(var i=0;i<data.labels.length;i++){
+                                  if(data.labels[i].name=="android"){
+                                  $scope.clientlabel = "android";
+                                  }
+                                  if(data.labels[i].name=="iOS"){
+                                  $scope.clientlabel = "iOS";
+                                  }
+                                  if(data.labels[i].name=="services"){
+                                  $scope.clientlabel = "services";
+                                  }
+                                  if(data.labels[i].name=="web"){
+                                  $scope.clientlabel = "web";
+                                  }
+                                  if(data.labels[i].name=="Streaming Team"){
+                                  $scope.clientlabel = "Streaming";
+                                  }
+                                  }
+              //                    console.log(data.number+" has "+data.labels.length+" labels and is associated with "+$scope.clientlabel);
+
+                                  //Find out when the issue came into the pipeline
+                                  issueService.zhissueeventscodereview(data.number,$scope.clientlabel).then(function(data) {
+                                                var issuetostring;
+                                                var team;
+                                                var today = new Date();
+                                                        for(var i=0;i<data.length;i++){
+                                                        if(data[i].type=="transferIssue"){
+//                                                        console.log(data[i].to_pipeline.name);
+                                                        if(data[i].to_pipeline.name=="Engineering In Progress"){
+                                                        issuetostring=data[data.length-2].issue;
+                                                        team=data[data.length-1].team;
+                                                        var yesterday = new Date(data[i].created_at);
+                                                        var timeWait = Math.round((today - yesterday)/$scope.oneDay);
+                                                        $scope.averagedaysinprogress.push(timeWait);
+                                                        gdata.addRows([[issuetostring.toString(),team,new Date(data[i].created_at),new Date(Date())]]);
+                                                        }}}
+
+                                                        var total=0;
+                                                        for(var i=0;i<$scope.averagedaysinprogress.length;i++){
+                                                            total = total+$scope.averagedaysinprogress[i];
+                                                        }
+                                                        $scope.averagedaysinprogress.inprogress = Math.round((total/$scope.averagedaysinprogress.length));
+                                                        gdata.sort(2);
+                                                        chart.draw(gdata,options);
+                                                        }
+                                                        );
+                                  }
+                          });
+                          });
+                          };
+
+function designreview(){
+                  //initialize the chart
+                  var gdata = new google.visualization.DataTable();
+                  //Add labels
+                  gdata.addColumn({type: 'string', id: 'Issue'});
+                  gdata.addColumn({type: 'string', id: 'client'});
+                  gdata.addColumn({type: 'datetime', id:'Start'});
+                  gdata.addColumn({type: 'datetime', id:'Today'});
+
+                  //Set chart options
+                  var options = {
+                      title: 'Time in Code Review',
+              //        timeline: {colorByRowLabel: true},
+              //        timeline: {groupByRowLabel: false},
+              //        legend: { position: 'none' },
+                      width: 500,
+                      height: 400
+                  };
+
+                  //Tell it where to show up in HTML
+                  var chart = new google.visualization.Timeline(document.getElementById('designreview'));
+
+                  //get the issues in a particular pipeline (should probably only call this once)
+                  issueService
+                      .zhboard()
+                      .then(function (data)
+                      {
+
+                      var promises = [];
+
+                      //Get the issue numbers in the pipeline
+                      for(var i=0;i<data.pipelines[3].issues.length;i++)
+                      {
+                          var promise = githubService.issueGet($scope.user.key, data.pipelines[3].issues[i].issue_number);
+                          promises.push(promise);
+                      }
+
+                      //Once all the issue data has been gathered, parse through it
+                      $q.all(promises).then(function(data) {
+                                  var data=[];
+                                  for(var j=0;j<promises.length;j++){
+                                  data=promises[j].$$state.value;
+                                  $scope.seekIssueNumber = data.number;
+                                  $scope.clientlabel = "Needs Design";
+                                  /*for(var i=0;i<data.labels.length;i++){
+                                  if(data.labels[i].name=="android"){
+                                  $scope.clientlabel = "android";
+                                  }
+                                  if(data.labels[i].name=="iOS"){
+                                  $scope.clientlabel = "iOS";
+                                  }
+                                  if(data.labels[i].name=="services"){
+                                  $scope.clientlabel = "services";
+                                  }
+                                  if(data.labels[i].name=="web"){
+                                  $scope.clientlabel = "web";
+                                  }
+                                  if(data.labels[i].name=="Streaming Team"){
+                                  $scope.clientlabel = "Streaming";
+                                  }
+                                  }*/
+              //                    console.log(data.number+" has "+data.labels.length+" labels and is associated with "+$scope.clientlabel);
+
+                                  //Find out when the issue came into the pipeline
+                                  issueService.zhissueeventscodereview(data.number,$scope.clientlabel).then(function(data) {
+                                                var issuetostring;
+                                                var team;
+                                                var today = new Date();
+                                                        for(var i=0;i<data.length;i++){
+                                                        if(data[i].type=="transferIssue"){
+                                                        if(data[i].to_pipeline.name=="Design Review"){
+                                                        issuetostring=data[data.length-2].issue;
+                                                        team=data[data.length-1].team;
+                                                        var yesterday = new Date(data[i].created_at);
+                                                        var timeWait = Math.round((today - yesterday)/$scope.oneDay);
+                                                        $scope.averagedaysdesignreview.push(timeWait);
+                                                        gdata.addRows([[issuetostring.toString(),team,new Date(data[i].created_at),new Date(Date())]]);
+                                                        }}}
+
+                                                        var total=0;
+                                                        for(var i=0;i<$scope.averagedaysdesignreview.length;i++){
+                                                            total = total+$scope.averagedaysdesignreview[i];
+                                                        }
+                                                        $scope.averagedaysdesignreview.designreview = Math.round((total/$scope.averagedaysdesignreview.length));
+                                                        gdata.sort(2);
+                                                        chart.draw(gdata,options);
+
+                                                        }
+                                                        );
+                                  }
+                          });
+                          });
+                          };
+
+function designspec(){
     //initialize the chart
     var gdata = new google.visualization.DataTable();
-    //Add label for platform
-    //Add label for description
+    //Add labels
     gdata.addColumn({type: 'string', id: 'Issue'});
     gdata.addColumn({type: 'string', id: 'client'});
     gdata.addColumn({type: 'datetime', id:'Start'});
     gdata.addColumn({type: 'datetime', id:'Today'});
+
+    //Set chart options
     var options = {
         title: 'Time in Code Review',
 //        timeline: {colorByRowLabel: true},
@@ -290,143 +504,276 @@ function codestale(){
         width: 500,
         height: 400
     };
-    var chart = new google.visualization.Timeline(document.getElementById('codestalehist'));
-    //get the issues in a particular pipeline
-    issueService.zhboard().then(function (data) {
-//        console.log("the pipeline is "+data.pipelines[9].name);
-        for(var i=0;i<data.pipelines[9].issues.length;i++){
-        $scope.codepipeline.push(data.pipelines[9].issues[i]);
+
+    //Tell it where to show up in HTML
+    var chart = new google.visualization.Timeline(document.getElementById('designspec'));
+
+    //get the issues in a particular pipeline (should probably only call this once)
+    issueService
+        .zhboard()
+        .then(function (data)
+        {
+
+        var promises = [];
+
+        //Get the issue numbers in the pipeline
+        for(var i=0;i<data.pipelines[4].issues.length;i++)
+        {
+            var promise = githubService.issueGet($scope.user.key, data.pipelines[4].issues[i].issue_number);
+            promises.push(promise);
         }
-//        console.log(data.pipelines[9].name+" has "+data.pipelines[9].issues.length+" issues");
-    }).then(function() {
-            var issuetostring;
-            for(var i=0;i<$scope.codepipeline.length;i++){
 
-            githubService.issueGet($scope.user.key, $scope.codepipeline[i].issue_number).then(function (data){
-            var teamlabel="null";
-            $scope.seekIssueNumber = data.number;
-            for(var i=0;i<data.labels.length;i++){
-            if(data.labels[i].name=="android"){
-            $scope.clientlabel = "android";
-            }
-            if(data.labels[i].name=="iOS"){
-            $scope.clientlabel = "iOS";
-            }
-            if(data.labels[i].name=="services"){
-            $scope.clientlabel = "services";
-            }
-            if(data.labels[i].name=="web"){
-            $scope.clientlabel = "web";
-            }
-            if(data.labels[i].name=="Streaming Team"){
-            $scope.clientlabel = "Streaming";
-            }
-            }
-            console.log(data.number+" has "+data.labels.length+" labels and is associated with "+$scope.clientlabel);
-
-            }).then(function() {
-            console.log($scope.clientlabel);
-            issueService.zhissueevents($scope.seekIssueNumber).then(function (data) {
-
-            var today = new Date();
-                    for(var i=0;i<data.length;i++){
-                    if(data[i].type=="transferIssue"){
-                    if(data[i].to_pipeline.name=="Code Review"){
-                    issuetostring=data[data.length-1].issue;
-                    var yesterday = new Date(data[i].created_at);
-                    var timeWait = Math.round((today - yesterday)/$scope.oneDay);
-                    $scope.averagedays.push(timeWait);
-                    gdata.addRows([[issuetostring.toString(),$scope.clientlabel,new Date(data[i].created_at),new Date(Date())]]);
-                    }}}
-
-                    var total=0;
-                    for(var i=0;i<$scope.averagedays.length;i++){
-                        total = total+$scope.averagedays[i];
+        //Once all the issue data has been gathered, parse through it
+        $q.all(promises).then(function(data) {
+                    var data=[];
+                    for(var j=0;j<promises.length;j++){
+                    data=promises[j].$$state.value;
+                    $scope.seekIssueNumber = data.number;
+                    $scope.clientlabel = "Needs Spec";
+                    /*for(var i=0;i<data.labels.length;i++){
+                    if(data.labels[i].name=="android"){
+                    $scope.clientlabel = "android";
                     }
-                    $scope.averagedays.codereview = Math.round((total/$scope.averagedays.length));
-                    gdata.sort(2);
-                    chart.draw(gdata,options);
-
+                    if(data.labels[i].name=="iOS"){
+                    $scope.clientlabel = "iOS";
                     }
-                    );
-
+                    if(data.labels[i].name=="services"){
+                    $scope.clientlabel = "services";
                     }
-                    );
+                    if(data.labels[i].name=="web"){
+                    $scope.clientlabel = "web";
+                    }
+                    if(data.labels[i].name=="Streaming Team"){
+                    $scope.clientlabel = "Streaming";
+                    }
+                    }*/
+//                    console.log(data.number+" has "+data.labels.length+" labels and is associated with "+$scope.clientlabel);
 
-            //for loop
-            }
-            //grabbing the board
-            }
+                    //Find out when the issue came into the pipeline
+                    issueService.zhissueeventscodereview(data.number,$scope.clientlabel).then(function(data) {
+                                  var issuetostring;
+                                  var team;
+                                  var today = new Date();
+                                          for(var i=0;i<data.length;i++){
+                                          if(data[i].type=="transferIssue"){
+                                          if(data[i].to_pipeline.name=="Design Spec"){
+                                          issuetostring=data[data.length-2].issue;
+                                          team=data[data.length-1].team;
+                                          var yesterday = new Date(data[i].created_at);
+                                          var timeWait = Math.round((today - yesterday)/$scope.oneDay);
+                                          $scope.averagedaysdesignspec.push(timeWait);
+                                          gdata.addRows([[issuetostring.toString(),team,new Date(data[i].created_at),new Date(Date())]]);
+                                          }}}
 
-            )
+                                          var total=0;
+                                          for(var i=0;i<$scope.averagedaysdesignspec.length;i++){
+                                              total = total+$scope.averagedaysdesignspec[i];
+                                          }
+                                          $scope.averagedaysdesignspec.designspec = Math.round((total/$scope.averagedaysdesignspec.length));
+                                          gdata.sort(2);
+                                          chart.draw(gdata,options);
 
-    };
+                                          }
+                                          );
+                    }
+            });
+            });
+            };
 
-function teststale(){
+function codestale(){
     //initialize the chart
-    var gdataT = new google.visualization.DataTable();
-    gdataT.addColumn({type: 'string', id: 'Issue'});
-    gdataT.addColumn({type: 'datetime', id:'Start'});
-    gdataT.addColumn({type: 'datetime', id:'Today'});
+    var gdata = new google.visualization.DataTable();
+    //Add labels
+    gdata.addColumn({type: 'string', id: 'Issue'});
+    gdata.addColumn({type: 'string', id: 'client'});
+    gdata.addColumn({type: 'datetime', id:'Start'});
+    gdata.addColumn({type: 'datetime', id:'Today'});
+
+    //Set chart options
     var options = {
         title: 'Time in Code Review',
+//        timeline: {colorByRowLabel: true},
+//        timeline: {groupByRowLabel: false},
 //        legend: { position: 'none' },
         width: 500,
         height: 400
     };
-    var chart = new google.visualization.Timeline(document.getElementById('teststalehist'));
-    //get the issues in a particular pipeline
-    issueService.zhboard().then(function (data) {
-        console.log("the pipeline is "+data.pipelines[10].name);
-        for(var i=0;i<data.pipelines[10].issues.length;i++){
-        $scope.testpipeline.push(data.pipelines[10].issues[i]);
+
+    //Tell it where to show up in HTML
+    var chart = new google.visualization.Timeline(document.getElementById('codestalehist'));
+
+    //get the issues in a particular pipeline (should probably only call this once)
+    issueService
+        .zhboard()
+        .then(function (data)
+        {
+
+        var promises = [];
+
+        //Get the issue numbers in the pipeline
+        for(var i=0;i<data.pipelines[9].issues.length;i++)
+        {
+            var promise = githubService.issueGet($scope.user.key, data.pipelines[9].issues[i].issue_number);
+            promises.push(promise);
         }
-    }).then(function() {
-    var issuetostring;
-            console.log($scope.testpipeline.length+" is the # in testing");
-            for(var i=0;i<$scope.testpipeline.length;i++){
-            issueService.zhissueevents($scope.testpipeline[i].issue_number).then(function (data) {
-            var today = new Date();
-                    var addData = false;
-                    for(var i=0;i<data.length-1;i++){
-                    addData=false;
-                    issuetostring=data[data.length-1].issue;
-                    if(data.length==2){
-                    addData=true;
+
+        //Once all the issue data has been gathered, parse through it
+        $q.all(promises).then(function(data) {
+                    var data=[];
+                    for(var j=0;j<promises.length;j++){
+                    data=promises[j].$$state.value;
+                    $scope.seekIssueNumber = data.number;
+                    for(var i=0;i<data.labels.length;i++){
+                    if(data.labels[i].name=="android"){
+                    $scope.clientlabel = "android";
                     }
-                    if(data[i].type=="transferIssue"){
-                    if(data[i].to_pipeline.name=="Testing"){
-                    addData=true;
-                    }}
-
-
-                    var yesterday = new Date(data[i].created_at);
-                    var timeWait = Math.round((today - yesterday)/$scope.oneDay);
-
-                    if(addData){
-                    $scope.averagedaystesting.push(timeWait);
-                    gdataT.addRows([[issuetostring.toString(),new Date(data[i].created_at),new Date(Date())]]);
-                    i=data.length;
+                    if(data.labels[i].name=="iOS"){
+                    $scope.clientlabel = "iOS";
                     }
-
-
+                    if(data.labels[i].name=="services"){
+                    $scope.clientlabel = "services";
                     }
-
-                    var total=0;
-                    for(var j=0;j<$scope.averagedaystesting.length;j++){
-                        total = total+$scope.averagedaystesting[j];
+                    if(data.labels[i].name=="web"){
+                    $scope.clientlabel = "web";
                     }
-                    $scope.averagedaystesting.testreview = Math.round((total/$scope.averagedaystesting.length));
-                    gdataT.sort(1);
-                    chart.draw(gdataT,options);
-                    });
+                    if(data.labels[i].name=="Streaming Team"){
+                    $scope.clientlabel = "Streaming";
+                    }
+                    }
+//                    console.log(data.number+" has "+data.labels.length+" labels and is associated with "+$scope.clientlabel);
 
-            }
-            }
+                    //Find out when the issue came into the pipeline
+                    issueService.zhissueeventscodereview(data.number,$scope.clientlabel).then(function(data) {
+                                  var issuetostring;
+                                  var team;
+                                  var today = new Date();
+                                          for(var i=0;i<data.length;i++){
+                                          if(data[i].type=="transferIssue"){
+                                          if(data[i].to_pipeline.name=="Code Review"){
+                                          issuetostring=data[data.length-2].issue;
+                                          team=data[data.length-1].team;
+                                          var yesterday = new Date(data[i].created_at);
+                                          var timeWait = Math.round((today - yesterday)/$scope.oneDay);
+                                          $scope.averagedays.push(timeWait);
+                                          gdata.addRows([[issuetostring.toString(),team,new Date(data[i].created_at),new Date(Date())]]);
+                                          }}}
 
-            )
+                                          var total=0;
+                                          for(var i=0;i<$scope.averagedays.length;i++){
+                                              total = total+$scope.averagedays[i];
+                                          }
+                                          $scope.averagedays.codereview = Math.round((total/$scope.averagedays.length));
+                                          gdata.sort(2);
+                                          chart.draw(gdata,options);
 
+                                          }
+                                          );
+                    }
+            });
+            });
+            };
+
+function teststale(){
+    //initialize the chart
+    var gdata = new google.visualization.DataTable();
+    //Add labels
+    gdata.addColumn({type: 'string', id: 'Issue'});
+    gdata.addColumn({type: 'string', id: 'client'});
+    gdata.addColumn({type: 'datetime', id:'Start'});
+    gdata.addColumn({type: 'datetime', id:'Today'});
+
+    //Set chart options
+    var options = {
+        title: 'Time in Testing',
+//        timeline: {colorByRowLabel: true},
+//        timeline: {groupByRowLabel: false},
+//        legend: { position: 'none' },
+        width: 500,
+        height: 400
     };
+
+    //Tell it where to show up in HTML
+    var chart = new google.visualization.Timeline(document.getElementById('teststalehist'));
+
+    //get the issues in a particular pipeline (should probably only call this once)
+    issueService
+        .zhboard()
+        .then(function (data)
+        {
+
+        var promises = [];
+
+        //Get the issue numbers in the pipeline
+        for(var i=0;i<data.pipelines[10].issues.length;i++)
+        {
+            var promise = githubService.issueGet($scope.user.key, data.pipelines[10].issues[i].issue_number);
+            promises.push(promise);
+        }
+
+        //Once all the issue data has been gathered, parse through it
+        $q.all(promises).then(function(data) {
+                    var data=[];
+                    for(var j=0;j<promises.length;j++){
+                    data=promises[j].$$state.value;
+                    $scope.seekIssueNumber = data.number;
+                    $scope.clientlabel = "Other";
+                    for(var i=0;i<data.labels.length;i++){
+
+                    if(data.labels[i].name=="android"){
+                    $scope.clientlabel = "android";
+                    }
+                    if(data.labels[i].name=="iOS"){
+                    $scope.clientlabel = "iOS";
+                    }
+                    if(data.labels[i].name=="services"){
+                    $scope.clientlabel = "services";
+                    }
+                    if(data.labels[i].name=="web"){
+                    $scope.clientlabel = "web";
+                    }
+                    if(data.labels[i].name=="Streaming Team"){
+                    $scope.clientlabel = "Streaming";
+                    console.log("Streaming!");
+                    }
+                    if(data.labels[i].name=="windows"){
+                    $scope.clientlabel = "windows";
+                    }
+                    if(data.labels[i].name=="macOS"){
+                    $scope.clientlabel = "macOS";
+                    }
+                    }
+//                    console.log(data.number+" has "+data.labels.length+" labels and is associated with "+$scope.clientlabel);
+
+                    //Find out when the issue came into the pipeline
+                    issueService.zhissueeventscodereview(data.number,$scope.clientlabel).then(function(data) {
+                                  var issuetostring;
+                                  var team;
+                                  var today = new Date();
+                                  for(var i=0;i<data.length;i++){
+                                         if(data[i].type=="transferIssue"){
+                                         if(data[i].to_pipeline.name=="Testing"){
+                                         issuetostring=data[data.length-2].issue;
+                                         team=data[data.length-1].team;
+                                         var yesterday = new Date(data[i].created_at);
+                                         var timeWait = Math.round((today - yesterday)/$scope.oneDay);
+                                         $scope.averagedaystesting.push(timeWait);
+                                         gdata.addRows([[issuetostring.toString(),team,new Date(data[i].created_at),new Date(Date())]]);
+                                         }}}
+
+                                         var total=0;
+                                         for(var i=0;i<$scope.averagedaystesting.length;i++){
+                                             total = total+$scope.averagedaystesting[i];
+                                         }
+                                         $scope.averagedaystesting.testing = Math.round((total/$scope.averagedaystesting.length));
+                                         gdata.sort(2);
+                                         chart.draw(gdata,options);
+
+                                         }
+                                  );
+                    }
+            });
+            });
+            };
 
 $scope.closedIssues=[];
 $scope.numclosedIssues=[];
@@ -541,7 +888,7 @@ $scope.onSubmitKey = function() {
 });
 
 
-zhsApp.service('githubService', function ($http){
+zhsApp.service('githubService', function ($q, $http){
 
     this.issueSearch = function(key,p){
         var dataUrl= "https://api.github.com/search/issues?q=repo:Mobcrush/Product-Development+closed:>2016-06-26&per_page=50";
@@ -598,7 +945,7 @@ zhsApp.service('githubService', function ($http){
 
 });
 
-zhsApp.service('issueService', function ($http) {
+zhsApp.service('issueService', function ($q, $http) {
 
     this.zhissuedata = function(issue_number,week,j){
 
@@ -669,15 +1016,47 @@ zhsApp.service('issueService', function ($http) {
             });
 
         }
+    this.zhissueeventscodereview = function(issue_number,team){
+
+                var dataUrl = "https://api.zenhub.io/p1/repositories/60145876/issues/";
+                var at = 'ba8dd91a4ab09a70684bea407238a515bd759f23d1180078289c68cb98da96dab988b15e7b59e7ad';
+
+                // Simple GET request example :
+                return $http({
+                    method: 'GET',
+                    dataType: "json",
+                    headers: 'X-Authentication-Token',
+                    url: dataUrl+issue_number+"/events?access_token="+at
+                })
+                .then( function(data, status, headers, config) {
+                    // this callback will be called asynchronously
+                    // when the response is available
+
+                    //Janky way to pass the issue # with the payload. Should refactor the JSON
+                    data.data.push({"issue":issue_number});
+                    data.data.push({"team":team});
+                    return data.data;
+
+                }, function (error) {console.log('zhissueevents totally errored');
+
+                    // called asynchronously if an error occurs
+                    // or server returns response with an error status.
+                });
+
+            }
+
     this.zhboard = function(){
 
-            var dataUrl = "http://cors.io/?u=https://api.zenhub.io/p1/repositories/60145876/board";
+//            var dataUrl = "http://cors.io/?u=https://api.zenhub.io/p1/repositories/60145876/board";
+            var dataUrl = "https://api.zenhub.io/p1/repositories/60145876/board";
             var at = 'ba8dd91a4ab09a70684bea407238a515bd759f23d1180078289c68cb98da96dab988b15e7b59e7ad';
 
             // Simple GET request example :
             return $http({
                 method: 'GET',
                 dataType: "json",
+//                withCredentials: "true",
+                headers: 'X-Authentication-Token',
                 url: dataUrl+"?access_token="+at
             })
             .then( function(data, status, headers, config) {
